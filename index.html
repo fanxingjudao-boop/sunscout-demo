@@ -3,227 +3,214 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="SUNSCOUT — 太陽光発電所の衛星植生モニタリング。Sentinel-2 NDVIで雑草・樹木の繁茂リスクを訪問前に検知。実在発電所24ヶ月の実測データ公開中。">
-<title>SUNSCOUT — 太陽光発電所の衛星植生モニタリング</title>
+<meta name="description" content="SUNSCOUT（サンスカウト）— 人工衛星が太陽光発電所の雑草を毎月チェック。現地に行かなくても草の伸び具合がグラフでわかる見守りサービスです。実際の発電所24ヶ月分のデータを公開中。">
+<title>SUNSCOUT — 人工衛星が発電所の雑草を毎月チェック</title>
 <style>
 /* ============================================================
-   SUNSCOUT Landing — editorial × satellite-telemetry aesthetic
+   SUNSCOUT Landing v2 — 初心者向け・明るい昼の配色・大きな文字
    ============================================================ */
 :root{
-  --night:#0a111e; --night2:#0f1a2c; --night-line:#1d2b42;
-  --paper:#f5f3ec; --panel:#ffffff; --line:#e3ded2; --line2:#cfc9b8;
-  --ink:#1b2430; --ink-soft:#34404e; --mut:#5d6675; --mut2:#8d94a0;
-  --amber:#e58a00; --amber-deep:#b56d00; --amber-soft:#ffb547;
-  --ndvi:#1f8f79; --ndvi-deep:#136353; --ok:#0f8f4f; --alert:#d83f30;
-  --prev:#5158cf;
-  --f-disp:"Avenir Next","Futura","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
-  --f-body:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  --bg:#f6f8f3; --panel:#ffffff; --line:#e3e8dd; --line2:#cbd4c4;
+  --ink:#243038; --ink-soft:#3a4a54; --mut:#5b6a74; --mut2:#8b98a1;
+  --amber:#e58a00; --amber-dark:#c67600; --amber-bg:#fff4e2;
+  --leaf:#2e9e6b; --leaf-deep:#1c7a50; --leaf-bg:#e9f6ef;
+  --sky:#eaf3fb; --sky-deep:#2f6fb3;
+  --alert:#d83f30; --alert-bg:#fdeeec;
+  --f-body:"BIZ UDPGothic","Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
   --f-mono:ui-monospace,"Cascadia Mono","Consolas",monospace;
-  --shadow:0 1px 2px rgba(27,36,48,.06),0 2px 8px rgba(27,36,48,.06);
-  --shadow-md:0 10px 34px rgba(27,36,48,.13);
+  --shadow:0 1px 2px rgba(36,48,56,.05),0 3px 10px rgba(36,48,56,.06);
+  --shadow-md:0 8px 28px rgba(36,48,56,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--paper);color:var(--ink);font-family:var(--f-body);
-  font-feature-settings:"palt";line-height:1.9;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:var(--amber-deep)}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);
+  font-size:16.5px;line-height:2;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--amber-dark)}
 img,svg{max-width:100%}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 ::selection{background:#ffe2b0;color:#4a3000}
 
-/* ---------- scroll reveal ---------- */
-.rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
+/* ---------- scroll reveal（控えめ） ---------- */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
 .rv.in{opacity:1;transform:none}
-.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}
 
-/* ---------- nav ---------- */
-.nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:26px;
-  padding:0 clamp(18px,4vw,42px);height:60px;
-  background:rgba(10,17,30,.78);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07);
-  transition:background .3s,border-color .3s}
-.nav.solid{background:rgba(245,243,236,.92);border-bottom-color:var(--line)}
-.nav .logo{font-family:var(--f-disp);font-weight:800;font-size:18px;letter-spacing:.02em;color:#fff;text-decoration:none;transition:color .3s}
+/* ---------- ナビ ---------- */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:20px;
+  padding:0 clamp(16px,4vw,40px);height:64px;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .logo{font-weight:800;font-size:19px;color:var(--ink);text-decoration:none;letter-spacing:.02em}
 .nav .logo b{color:var(--amber)}
-.nav.solid .logo{color:var(--ink)}
-.nav .links{margin-left:auto;display:flex;gap:22px;align-items:center}
-.nav .links a{font-size:12.5px;color:rgba(255,255,255,.75);text-decoration:none;letter-spacing:.04em;transition:color .2s}
-.nav.solid .links a{color:var(--mut)}
-.nav .links a:hover{color:var(--amber)}
-.nav .links a.demo-cta{padding:7px 16px;border-radius:99px;background:var(--amber);color:#fff!important;font-weight:700;box-shadow:0 2px 10px rgba(229,138,0,.35)}
-.nav .links a.demo-cta:hover{background:#cf7d00}
-@media(max-width:760px){.nav .links a:not(.demo-cta){display:none}}
+.nav .logo small{font-size:11px;color:var(--mut);font-weight:600;margin-left:8px}
+.nav .links{margin-left:auto;display:flex;gap:4px;align-items:center}
+.nav .links a{font-size:13.5px;color:var(--ink-soft);text-decoration:none;padding:8px 12px;border-radius:9px}
+.nav .links a:hover{background:var(--amber-bg);color:var(--amber-dark)}
+.nav .links a.demo-cta{margin-left:6px;padding:10px 18px;border-radius:99px;background:var(--amber);color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(229,138,0,.35)}
+.nav .links a.demo-cta:hover{background:var(--amber-dark);color:#fff}
+@media(max-width:860px){.nav .links a:not(.demo-cta){display:none}}
 
-/* ---------- hero ---------- */
-.hero{position:relative;min-height:100svh;background:
-  radial-gradient(1100px 500px at 78% 108%, rgba(31,143,121,.28), transparent 62%),
-  radial-gradient(900px 420px at 22% 112%, rgba(229,138,0,.20), transparent 60%),
-  linear-gradient(180deg,var(--night) 0%,var(--night2) 78%,#0d1826 100%);
-  color:#eef2f8;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
-.stars{position:absolute;inset:0;pointer-events:none;opacity:.8;
-  background-image:
-   radial-gradient(1px 1px at 22px 34px,rgba(255,255,255,.9),transparent 60%),
-   radial-gradient(1px 1px at 130px 90px,rgba(255,255,255,.55),transparent 60%),
-   radial-gradient(1.4px 1.4px at 235px 40px,rgba(255,255,255,.75),transparent 60%),
-   radial-gradient(1px 1px at 320px 140px,rgba(255,255,255,.5),transparent 60%),
-   radial-gradient(1.2px 1.2px at 62px 170px,rgba(255,255,255,.65),transparent 60%);
-  background-size:380px 220px}
-.orbit-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.scan{position:absolute;top:0;bottom:0;width:180px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(255,181,71,.05) 45%,rgba(255,181,71,.14) 50%,rgba(255,181,71,.05) 55%,transparent);
-  animation:scan 9s linear infinite}
-@keyframes scan{from{left:-200px}to{left:110%}}
-.earth{position:absolute;left:50%;bottom:-46vw;transform:translateX(-50%);width:160vw;height:60vw;min-width:1400px;min-height:520px;
-  border-radius:50% 50% 0 0/100% 100% 0 0;
-  background:linear-gradient(180deg,#12281f 0%,#0d1d17 40%,#0a1512 100%);
-  box-shadow:0 -1px 0 rgba(159,255,215,.35),0 -14px 60px rgba(31,143,121,.30),0 -60px 180px rgba(31,143,121,.14)}
-.hero-inner{position:relative;z-index:2;max-width:1060px;margin:0 auto;padding:120px clamp(20px,5vw,48px) 0;width:100%}
-.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.32em;color:var(--amber-soft);text-transform:uppercase}
-.eyebrow span{color:rgba(238,242,248,.55);letter-spacing:.18em}
-.hero h1{font-size:clamp(34px,6vw,66px);line-height:1.28;font-weight:800;letter-spacing:.01em;margin:22px 0 24px}
-.hero h1 em{font-style:normal;color:var(--amber-soft);position:relative;white-space:nowrap}
-.hero h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.06em;height:.14em;background:rgba(229,138,0,.35);border-radius:2px;z-index:-1}
-.hero .lead{max-width:640px;font-size:clamp(14px,1.6vw,16.5px);color:rgba(238,242,248,.82);line-height:2.1}
-.hero .lead b{color:#fff}
-.cta-row{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:700;
-  text-decoration:none;font-family:var(--f-body);letter-spacing:.03em;transition:transform .18s,box-shadow .18s,background .18s;cursor:pointer;border:0}
+/* ---------- ヒーロー ---------- */
+.hero{background:linear-gradient(180deg,#dcecfa 0%,#eaf3fb 46%,var(--bg) 100%);overflow:hidden}
+.hero-inner{max-width:1080px;margin:0 auto;padding:clamp(40px,7vw,84px) clamp(20px,5vw,44px) clamp(30px,5vw,56px);
+  display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(20px,4vw,52px);align-items:center}
+@media(max-width:860px){.hero-inner{grid-template-columns:1fr}}
+.hero .kicker{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
+  border-radius:99px;padding:7px 16px;font-size:13px;font-weight:700;color:var(--leaf-deep);box-shadow:var(--shadow)}
+.hero h1{font-size:clamp(28px,4.6vw,44px);line-height:1.55;font-weight:800;letter-spacing:.01em;margin:20px 0 18px;text-wrap:balance}
+.hero h1 .amber{color:var(--amber-dark)}
+.hero .lead{font-size:clamp(15px,1.8vw,17.5px);color:var(--ink-soft);max-width:34em}
+.hero .lead b{color:var(--ink)}
+.cta-row{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:16px 30px;border-radius:14px;
+  font-size:16px;font-weight:800;text-decoration:none;font-family:var(--f-body);transition:transform .15s,box-shadow .15s,background .15s;cursor:pointer;border:0}
 .btn:active{transform:translateY(1px)}
-.btn.pri{background:var(--amber);color:#fff;box-shadow:0 6px 24px rgba(229,138,0,.4)}
-.btn.pri:hover{background:#f39a10;box-shadow:0 8px 30px rgba(229,138,0,.55);transform:translateY(-2px)}
-.btn.ghost{background:transparent;color:#eef2f8;border:1px solid rgba(238,242,248,.28)}
-.btn.ghost:hover{border-color:var(--amber-soft);color:var(--amber-soft);transform:translateY(-2px)}
-.hero-stats{display:flex;gap:0;margin:58px 0 0;border-top:1px solid rgba(255,255,255,.14);flex-wrap:wrap}
-.hero-stats>div{padding:20px clamp(16px,3vw,34px) 46px;border-right:1px solid rgba(255,255,255,.1)}
-.hero-stats>div:first-child{padding-left:0}
-.hero-stats>div:last-child{border-right:0}
-.hero-stats dt{font-size:10px;letter-spacing:.2em;color:rgba(238,242,248,.5);text-transform:uppercase;font-family:var(--f-mono)}
-.hero-stats dd{font-family:var(--f-disp);font-size:clamp(20px,2.6vw,27px);font-weight:700;color:#fff;margin-top:6px}
-.hero-stats dd small{font-size:12px;color:rgba(238,242,248,.55);font-weight:400;margin-left:4px}
-.hero-stats dd .u{color:var(--amber-soft)}
+.btn.pri{background:var(--amber);color:#fff;box-shadow:0 5px 18px rgba(229,138,0,.4)}
+.btn.pri:hover{background:var(--amber-dark);transform:translateY(-2px)}
+.btn.sub{background:#fff;color:var(--ink);border:2px solid var(--line2)}
+.btn.sub:hover{border-color:var(--amber);color:var(--amber-dark);transform:translateY(-2px)}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hero-art{position:relative}
+.hero-art svg{display:block;width:100%;height:auto;filter:drop-shadow(0 10px 24px rgba(47,111,179,.12))}
 
-/* ---------- section scaffolding ---------- */
+/* ---------- 数字ストリップ ---------- */
+.strip{max-width:1080px;margin:0 auto;padding:0 clamp(20px,5vw,44px) clamp(36px,5vw,60px)}
+.strip-in{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:860px){.strip-in{grid-template-columns:1fr 1fr}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);text-align:center}
+.stat .num{font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--ink)}
+.stat .num b{color:var(--amber-dark)}
+.stat .cap{font-size:12.5px;color:var(--mut);margin-top:2px}
+
+/* ---------- セクション共通 ---------- */
 section{position:relative}
-.wrap{max-width:1060px;margin:0 auto;padding:clamp(70px,10vw,120px) clamp(20px,5vw,48px)}
-.sec-eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.3em;color:var(--amber-deep);text-transform:uppercase;display:flex;align-items:center;gap:12px}
-.sec-eyebrow::before{content:"";width:34px;height:1px;background:var(--amber)}
-h2.sec-title{font-size:clamp(25px,3.6vw,38px);font-weight:800;line-height:1.5;letter-spacing:.01em;margin:16px 0 14px}
-.sec-lead{color:var(--mut);font-size:15px;max-width:640px}
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(56px,8vw,96px) clamp(20px,5vw,44px)}
+.sec-badge{display:inline-block;background:var(--amber-bg);color:var(--amber-dark);border:1px solid #f2ddb8;
+  font-size:13px;font-weight:800;border-radius:99px;padding:6px 18px}
+h2.sec-title{font-size:clamp(23px,3.4vw,33px);font-weight:800;line-height:1.6;margin:18px 0 12px;text-wrap:balance}
+.sec-lead{color:var(--mut);font-size:15.5px;max-width:38em}
 
-/* ---------- problem ---------- */
-.problems{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:44px}
-.problem{background:var(--panel);padding:30px 26px 28px;position:relative}
-.problem .no{font-family:var(--f-mono);font-size:11px;color:var(--mut2);letter-spacing:.14em}
-.problem h3{font-size:16.5px;font-weight:800;margin:12px 0 10px;line-height:1.6}
-.problem p{font-size:13px;color:var(--mut);line-height:2}
-.problem::after{content:"";position:absolute;left:26px;bottom:0;width:0;height:3px;background:var(--amber);transition:width .5s cubic-bezier(.2,.6,.2,1)}
-.problem:hover::after{width:44px}
-@media(max-width:820px){.problems{grid-template-columns:1fr}}
+/* ---------- 30秒でわかる（3コマ） ---------- */
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+@media(max-width:860px){.steps3{grid-template-columns:1fr}}
+.step3{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 24px;box-shadow:var(--shadow);text-align:center;position:relative}
+.step3 .badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--leaf);color:#fff;
+  font-size:13px;font-weight:800;border-radius:99px;padding:4px 16px;letter-spacing:.06em}
+.step3 svg{height:110px;margin:14px auto 6px;display:block}
+.step3 h3{font-size:17.5px;font-weight:800;margin:10px 0 8px}
+.step3 p{font-size:13.5px;color:var(--mut);text-align:left}
+.step3 p b{color:var(--ink)}
+.steps3-note{margin-top:22px;text-align:center;font-size:13.5px;color:var(--mut)}
+.term{display:inline-block;background:var(--leaf-bg);border:1px solid #cfe9db;color:var(--leaf-deep);
+  border-radius:8px;padding:1px 8px;font-size:.86em;font-weight:700;white-space:nowrap}
 
-/* ---------- features ---------- */
-.feat-sec{background:linear-gradient(180deg,var(--paper),#efece2 60%,var(--paper))}
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:46px}
-.feat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px 26px 30px;box-shadow:var(--shadow);transition:transform .25s,box-shadow .25s}
-.feat:hover{transform:translateY(-5px);box-shadow:var(--shadow-md)}
-.feat .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:18px;background:#fdf3e2;border:1px solid #f3ddb4}
-.feat h3{font-size:17px;font-weight:800;margin-bottom:10px}
-.feat p{font-size:13px;color:var(--mut);line-height:2}
-.feat .tag{display:inline-block;margin-top:16px;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--ndvi-deep);background:#e9f5f1;border:1px solid #c8e6dc;padding:3px 10px;border-radius:99px}
-@media(max-width:820px){.features{grid-template-columns:1fr}}
+/* ---------- お困りごと ---------- */
+.worry-sec{background:linear-gradient(180deg,var(--bg),#eef2e8 55%,var(--bg))}
+.worries{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+@media(max-width:860px){.worries{grid-template-columns:1fr}}
+.worry{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 24px;box-shadow:var(--shadow)}
+.worry .fuki{background:var(--sky);border-radius:14px;padding:14px 16px;font-size:14.5px;font-weight:700;color:#2b4a68;position:relative;margin-bottom:18px;line-height:1.8}
+.worry .fuki::after{content:"";position:absolute;left:26px;bottom:-9px;border:10px solid transparent;border-top-color:var(--sky);border-bottom:0}
+.worry p{font-size:13.5px;color:var(--mut)}
+.worry p b{color:var(--leaf-deep)}
 
-/* ---------- live demo ---------- */
-.demo-sec{background:var(--night);color:#e8edf5}
-.demo-sec .sec-eyebrow{color:var(--amber-soft)}
-.demo-sec .sec-eyebrow::before{background:var(--amber-soft)}
-.demo-sec .sec-lead{color:rgba(232,237,245,.65)}
-.demo-note{font-family:var(--f-mono);font-size:11px;color:rgba(232,237,245,.5);margin-top:8px}
-.site-tabs{display:flex;gap:10px;margin:38px 0 20px;flex-wrap:wrap}
-.stab{background:rgba(255,255,255,.04);border:1px solid var(--night-line);color:#c6cfdc;border-radius:13px;
-  padding:13px 20px;cursor:pointer;font-family:var(--f-body);text-align:left;transition:border-color .2s,background .2s;min-width:230px}
-.stab .nm{font-size:14px;font-weight:800;color:#eef2f8}
-.stab .sub{font-family:var(--f-mono);font-size:10.5px;color:rgba(232,237,245,.55);margin-top:4px}
-.stab.on{border-color:var(--amber);background:rgba(229,138,0,.1);box-shadow:0 0 0 1px var(--amber)}
-.stab.on .nm{color:var(--amber-soft)}
-.stab:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.demo-grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
-@media(max-width:900px){.demo-grid{grid-template-columns:1fr}}
-.dcard{background:rgba(255,255,255,.035);border:1px solid var(--night-line);border-radius:18px;padding:20px 22px;position:relative;overflow:hidden}
-.dcard h4{font-family:var(--f-mono);font-size:10px;letter-spacing:.22em;color:rgba(232,237,245,.5);text-transform:uppercase;margin-bottom:14px}
-.aoi-box{position:relative;border-radius:12px;overflow:hidden;background:
-  radial-gradient(340px 200px at 62% 30%,rgba(31,143,121,.22),transparent 70%),
-  linear-gradient(160deg,#0f2018,#0b1712 70%);border:1px solid #1c332a;height:240px}
+/* ---------- 実際のデータ ---------- */
+.data-sec{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.honest-chip{display:inline-flex;align-items:center;gap:8px;background:var(--leaf-bg);border:1px solid #cfe9db;
+  border-radius:12px;padding:9px 16px;font-size:13.5px;font-weight:700;color:var(--leaf-deep);margin-top:14px}
+.site-tabs{display:flex;gap:12px;margin:36px 0 18px;flex-wrap:wrap}
+.stab{background:var(--bg);border:2px solid var(--line);color:var(--ink);border-radius:16px;
+  padding:14px 20px;cursor:pointer;font-family:var(--f-body);text-align:left;transition:border-color .2s,background .2s;min-width:250px}
+.stab .nm{font-size:15.5px;font-weight:800}
+.stab .sub{font-size:12px;color:var(--mut);margin-top:3px}
+.stab.on{border-color:var(--amber);background:var(--amber-bg)}
+.stab.on .nm{color:var(--amber-dark)}
+.stab:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.stab:hover{border-color:var(--amber)}
+.data-grid{display:grid;grid-template-columns:330px 1fr;gap:18px}
+@media(max-width:900px){.data-grid{grid-template-columns:1fr}}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow)}
+.dcard h4{font-size:13px;font-weight:800;color:var(--mut);margin-bottom:14px;letter-spacing:.04em}
+.aoi-box{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(160deg,#e4efdc,#d3e5c9 70%);border:1px solid var(--line);height:230px}
 .aoi-box svg{position:absolute;inset:0;width:100%;height:100%}
-.aoi-cap{position:absolute;left:10px;bottom:9px;font-family:var(--f-mono);font-size:9.5px;color:rgba(232,237,245,.6);
-  background:rgba(10,17,30,.72);padding:4px 9px;border-radius:6px;line-height:1.6}
+.aoi-cap{position:absolute;left:10px;bottom:9px;font-size:11px;color:var(--ink-soft);
+  background:rgba(255,255,255,.9);padding:4px 10px;border-radius:8px;line-height:1.7}
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.dkpi{background:rgba(255,255,255,.04);border:1px solid var(--night-line);border-radius:11px;padding:11px 13px}
-.dkpi .l{font-size:9.5px;letter-spacing:.12em;color:rgba(232,237,245,.5);font-family:var(--f-mono);text-transform:uppercase}
-.dkpi .v{font-family:var(--f-disp);font-size:19px;font-weight:700;color:#fff;margin-top:4px}
-.dkpi .v small{font-size:10.5px;color:rgba(232,237,245,.5);font-weight:400}
-.dkpi .v.good{color:#5fd39a}.dkpi .v.warn{color:var(--amber-soft)}
+.dkpi{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.dkpi .l{font-size:11.5px;color:var(--mut)}
+.dkpi .v{font-size:19px;font-weight:800;color:var(--ink);margin-top:2px;white-space:nowrap}
+.dkpi .v small{font-size:10.5px;color:var(--mut);font-weight:600;white-space:nowrap}
+.dkpi .v.good{color:var(--leaf-deep)}.dkpi .v.warn{color:var(--amber-dark)}
 .chart-zone{display:flex;flex-direction:column}
-.chart-head2{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px}
-.chart-head2 h3{font-size:15px;font-weight:800;color:#eef2f8}
-.legend2{margin-left:auto;display:flex;gap:16px;font-size:11px;color:rgba(232,237,245,.65);font-family:var(--f-mono)}
-.legend2 i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
-.legend2 .gap{color:#ff8d80}
+.chart-head2{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+.chart-head2 h3{font-size:16.5px;font-weight:800}
+.chart-hint{font-size:12px;color:var(--mut2)}
 #lchart{display:block;width:100%;height:250px;flex:1}
-.status-line{margin-top:16px;border-radius:13px;padding:15px 18px;font-size:13px;line-height:1.9;border:1px solid}
-.status-line b{color:#fff}
-.st-ok{background:rgba(15,143,79,.12);border-color:rgba(95,211,154,.3)}
-.st-ok .stag{color:#5fd39a}
-.st-watch{background:rgba(229,138,0,.1);border-color:rgba(255,181,71,.35)}
-.st-watch .stag{color:var(--amber-soft)}
-.stag{font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px}
-.tip2{position:fixed;z-index:60;pointer-events:none;background:#101a2c;border:1px solid #2a3c5c;border-radius:10px;
-  padding:9px 13px;font-size:11.5px;line-height:1.8;color:#e8edf5;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none;min-width:160px}
-.tip2 .t{font-family:var(--f-mono);font-size:10px;color:rgba(232,237,245,.55)}
-.tip2 i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
-.demo-more{margin-top:30px;text-align:center}
-.demo-more .btn.pri{box-shadow:0 6px 30px rgba(229,138,0,.45)}
-.demo-more p{font-size:11.5px;color:rgba(232,237,245,.5);margin-top:12px;font-family:var(--f-mono)}
+/* グラフの読み方ガイド */
+.howto{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 4px}
+@media(max-width:700px){.howto{grid-template-columns:1fr}}
+.howto div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.8;color:var(--ink-soft)}
+.howto b{display:block;font-size:13px;color:var(--ink)}
+.howto i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.status-line{margin-top:14px;border-radius:14px;padding:16px 20px;font-size:14.5px;line-height:2;border:1.5px solid}
+.st-ok{background:var(--leaf-bg);border-color:#bfe3d0}
+.st-ok .stag{color:var(--leaf-deep)}
+.st-watch{background:var(--amber-bg);border-color:#f2ddb8}
+.st-watch .stag{color:var(--amber-dark)}
+.stag{font-size:15px;font-weight:800;display:block;margin-bottom:4px}
+.tip2{position:fixed;z-index:60;pointer-events:none;background:#fff;border:1.5px solid var(--line2);border-radius:12px;
+  padding:10px 14px;font-size:12.5px;line-height:1.9;color:var(--ink);box-shadow:var(--shadow-md);display:none;min-width:170px}
+.tip2 .t{font-size:11px;color:var(--mut)}
+.tip2 i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.data-more{margin-top:32px;text-align:center}
+.data-more p{font-size:12.5px;color:var(--mut);margin-top:12px}
 
-/* ---------- honesty ---------- */
-.honest-sec{background:var(--paper)}
-.honest-list{margin-top:44px;display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.honest{display:grid;grid-template-columns:210px 1fr;gap:24px;background:var(--panel);padding:28px 30px}
-.honest .h-k{font-weight:800;font-size:15.5px;line-height:1.7}
-.honest .h-k .mono{display:block;font-size:10px;color:var(--mut2);letter-spacing:.12em;margin-top:6px;font-weight:400}
-.honest .h-v{font-size:13.5px;color:var(--ink-soft);line-height:2.05}
-.honest .h-v b{color:var(--ink)}
-.honest .h-v .pos{color:var(--ndvi-deep);font-weight:700}
-@media(max-width:760px){.honest{grid-template-columns:1fr;gap:8px}}
+/* ---------- よくある質問 ---------- */
+.faq-list{margin-top:36px;display:flex;flex-direction:column;gap:12px;max-width:820px}
+details.faq{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+details.faq summary{list-style:none;cursor:pointer;display:flex;align-items:flex-start;gap:14px;padding:18px 22px;font-size:15.5px;font-weight:800;line-height:1.8}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary .q{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#fff;
+  display:grid;place-items:center;font-size:14px;font-weight:800;margin-top:2px}
+details.faq summary .arw{margin-left:auto;color:var(--mut2);transition:transform .25s;flex-shrink:0;margin-top:6px}
+details.faq[open] summary .arw{transform:rotate(180deg)}
+details.faq summary:hover{background:#fffaf2}
+details.faq summary:focus-visible{outline:3px solid var(--amber);outline-offset:-3px}
+.faq-a{display:flex;gap:14px;padding:2px 22px 20px;font-size:14px;color:var(--ink-soft);line-height:2.05}
+.faq-a .a{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--leaf);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800}
+.faq-a p b{color:var(--ink)}
+.faq-a p .pos{color:var(--leaf-deep);font-weight:700}
 
-/* ---------- pipeline ---------- */
-.pipe-sec{background:linear-gradient(180deg,#efece2,var(--paper))}
-.pipeline{margin-top:52px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:step}
-.pstep{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 20px 24px;box-shadow:var(--shadow)}
-.pstep::before{counter-increment:step;content:"0" counter(step);font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--amber-deep);
-  letter-spacing:.15em;display:block;margin-bottom:12px}
-.pstep::after{content:"→";position:absolute;right:-15px;top:50%;transform:translateY(-50%);color:var(--mut2);font-size:15px;z-index:2}
-.pstep:last-child::after{display:none}
-.pstep h3{font-size:14.5px;font-weight:800;margin-bottom:8px;line-height:1.6}
-.pstep p{font-size:12px;color:var(--mut);line-height:1.95}
-.pstep .src{display:inline-block;margin-top:12px;font-family:var(--f-mono);font-size:9.5px;color:var(--mut);border:1px solid var(--line2);border-radius:99px;padding:2px 9px}
-@media(max-width:900px){.pipeline{grid-template-columns:1fr 1fr}.pstep::after{display:none}}
-@media(max-width:540px){.pipeline{grid-template-columns:1fr}}
+/* ---------- ご利用の流れ ---------- */
+.flow-sec{background:linear-gradient(180deg,var(--bg),#eef2e8 55%,var(--bg))}
+.flow{margin-top:44px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:fstep}
+@media(max-width:900px){.flow{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.flow{grid-template-columns:1fr}}
+.fstep{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px 20px;box-shadow:var(--shadow);text-align:center}
+.fstep .no{width:38px;height:38px;border-radius:50%;background:var(--amber);color:#fff;display:grid;place-items:center;
+  font-size:16px;font-weight:800;margin:0 auto 12px}
+.fstep h3{font-size:15.5px;font-weight:800;margin-bottom:6px}
+.fstep p{font-size:12.5px;color:var(--mut);text-align:left}
+.fstep .you{display:inline-block;margin-top:10px;font-size:11px;font-weight:800;border-radius:99px;padding:3px 12px}
+.fstep .you.u{background:var(--sky);color:#2b4a68}
+.fstep .you.s{background:var(--leaf-bg);color:var(--leaf-deep)}
+.flow-note{margin-top:20px;text-align:center;font-size:13.5px;color:var(--mut)}
 
-/* ---------- final CTA ---------- */
-.final{background:
-  radial-gradient(700px 300px at 50% 120%,rgba(229,138,0,.3),transparent 65%),
-  linear-gradient(180deg,var(--night2),var(--night));color:#eef2f8;text-align:center}
-.final h2{font-size:clamp(24px,3.6vw,36px);font-weight:800;line-height:1.6}
-.final p{color:rgba(238,242,248,.7);max-width:560px;margin:16px auto 0;font-size:14.5px}
-.final .cta-row{justify-content:center;margin-top:36px}
+/* ---------- 最後のCTA ---------- */
+.final{background:linear-gradient(180deg,#eaf3fb,#dcecfa)}
+.final .wrap{text-align:center}
+.final h2{font-size:clamp(22px,3.4vw,32px);font-weight:800;line-height:1.7;text-wrap:balance}
+.final p{color:var(--ink-soft);max-width:34em;margin:14px auto 0;font-size:15px}
+.final .cta-row{justify-content:center;margin-top:30px}
 
-/* ---------- footer ---------- */
-footer{background:var(--night);color:rgba(232,237,245,.55);border-top:1px solid var(--night-line)}
-.foot-wrap{max-width:1060px;margin:0 auto;padding:44px clamp(20px,5vw,48px) 52px;font-size:11.5px;line-height:2.1}
-.foot-wrap .logo{font-family:var(--f-disp);font-weight:800;font-size:16px;color:#fff}
+/* ---------- フッター ---------- */
+footer{background:#2b3640;color:rgba(240,244,240,.75)}
+.foot-wrap{max-width:1080px;margin:0 auto;padding:40px clamp(20px,5vw,44px) 48px;font-size:12px;line-height:2.1}
+.foot-wrap .logo{font-weight:800;font-size:17px;color:#fff}
 .foot-wrap .logo b{color:var(--amber)}
-.foot-wrap a{color:rgba(232,237,245,.75)}
-.foot-attr{margin-top:16px;padding-top:16px;border-top:1px solid var(--night-line)}
-.foot-flag{display:inline-block;margin-top:14px;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;
-  border:1px solid var(--night-line);border-radius:6px;padding:4px 10px;color:rgba(232,237,245,.5)}
+.foot-wrap a{color:#ffd08a}
+.foot-attr{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.14)}
+.foot-flag{display:inline-block;margin-top:12px;font-size:11px;letter-spacing:.06em;
+  border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:4px 12px;color:rgba(240,244,240,.6)}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
@@ -234,230 +221,315 @@ footer{background:var(--night);color:rgba(232,237,245,.55);border-top:1px solid 
 </head>
 <body>
 
-<nav class="nav" id="nav">
-  <a class="logo" href="#top">SUN<b>SCOUT</b></a>
+<nav class="nav">
+  <a class="logo" href="#top">SUN<b>SCOUT</b><small>サンスカウト</small></a>
   <div class="links">
-    <a href="#problem">課題</a>
-    <a href="#feature">できること</a>
-    <a href="#demo">実測データ</a>
-    <a href="#honest">限界と誠実</a>
-    <a href="#how">仕組み</a>
-    <a class="demo-cta" href="./demo.html">フルデモ画面 →</a>
+    <a href="#about">30秒でわかる</a>
+    <a href="#worry">こんな時に</a>
+    <a href="#data">実際のデータ</a>
+    <a href="#faq">よくある質問</a>
+    <a href="#flow">ご利用の流れ</a>
+    <a class="demo-cta" href="./demo.html">デモ画面をさわる</a>
   </div>
 </nav>
 
-<!-- ============ HERO ============ -->
-<section class="hero" id="top">
-  <div class="stars"></div>
-  <svg class="orbit-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <ellipse cx="600" cy="880" rx="760" ry="520" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1" stroke-dasharray="3 7"/>
-    <ellipse cx="600" cy="920" rx="920" ry="620" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1" stroke-dasharray="2 9"/>
-    <circle r="4" fill="#ffb547">
-      <animateMotion dur="26s" repeatCount="indefinite"
-        path="M -160,880 a 760,520 0 1,1 1520,0 a 760,520 0 1,1 -1520,0"/>
-    </circle>
-    <circle r="9" fill="none" stroke="rgba(255,181,71,.4)" stroke-width="1">
-      <animateMotion dur="26s" repeatCount="indefinite"
-        path="M -160,880 a 760,520 0 1,1 1520,0 a 760,520 0 1,1 -1520,0"/>
-    </circle>
-  </svg>
-  <div class="scan"></div>
-  <div class="earth"></div>
-
+<!-- ============ ヒーロー ============ -->
+<header class="hero" id="top">
   <div class="hero-inner">
-    <p class="eyebrow rv">Satellite Vegetation Monitoring <span>/ for Solar O&amp;M</span></p>
-    <h1 class="rv d1">現地に行く前に、<br><em>敷地の「緑」</em>は見えている。</h1>
-    <p class="lead rv d2">SUNSCOUT は、太陽光発電所の敷地を <b>Sentinel-2 衛星</b>で毎月見守り、
-    雑草・樹木の繁茂リスクを<b>訪問前に</b>検知する植生モニタリングサービスです。
-    実在の発電所で <b>24ヶ月分の実測</b>を完了し、雲による欠測率まで定量化しています。</p>
-    <div class="cta-row rv d3">
-      <a class="btn pri" href="#demo">実測データを見る</a>
-      <a class="btn ghost" href="#how">仕組みを知る</a>
+    <div>
+      <span class="kicker rv">🛰️ 太陽光発電所の見守りサービス</span>
+      <h1 class="rv d1">人工衛星が、発電所の<br><span class="amber">雑草</span>を毎月チェック。</h1>
+      <p class="lead rv d2">現地に行かなくても、敷地の<b>草の伸び具合</b>がグラフでわかります。
+      「そろそろ草刈りが必要かも」を<b>訪問する前に</b>教えてくれる、太陽光発電所オーナー・管理会社向けのサービスです。</p>
+      <div class="cta-row rv d2">
+        <a class="btn pri" href="#data">実際のデータを見てみる</a>
+        <a class="btn sub" href="#about">30秒でわかる説明へ</a>
+      </div>
     </div>
-    <dl class="hero-stats rv d3">
-      <div><dt>Monitored</dt><dd>2<small>サイト</small> <span class="u">×</span> 24<small>ヶ月</small></dd></div>
-      <div><dt>Resolution</dt><dd>10<small>m / pixel</small></dd></div>
-      <div><dt>Update</dt><dd>月1回<small>（雲マスク付き）</small></dd></div>
-      <div><dt>Gap rate</dt><dd>8.3–12.5<small>%（欠測は明示）</small></dd></div>
-    </dl>
+    <div class="hero-art rv d1" aria-hidden="true">
+      <svg viewBox="0 0 520 400">
+        <!-- 太陽 -->
+        <circle cx="70" cy="64" r="30" fill="#ffcf5c"/>
+        <g stroke="#ffcf5c" stroke-width="5" stroke-linecap="round">
+          <line x1="70" y1="14" x2="70" y2="26"/><line x1="70" y1="102" x2="70" y2="114"/>
+          <line x1="20" y1="64" x2="32" y2="64"/><line x1="108" y1="64" x2="120" y2="64"/>
+          <line x1="34" y1="28" x2="43" y2="37"/><line x1="97" y1="91" x2="106" y2="100"/>
+          <line x1="106" y1="28" x2="97" y2="37"/><line x1="43" y1="91" x2="34" y2="100"/>
+        </g>
+        <!-- 雲 -->
+        <g fill="#ffffff" opacity=".9">
+          <ellipse cx="420" cy="60" rx="46" ry="18"/><ellipse cx="452" cy="50" rx="30" ry="14"/>
+          <ellipse cx="160" cy="120" rx="34" ry="13" opacity=".7"/>
+        </g>
+        <!-- 衛星 -->
+        <g transform="translate(300,74) rotate(-8)">
+          <rect x="-70" y="-12" width="44" height="26" rx="4" fill="#3d5a80"/>
+          <rect x="26" y="-12" width="44" height="26" rx="4" fill="#3d5a80"/>
+          <g stroke="#98c1d9" stroke-width="2"><line x1="-59" y1="-12" x2="-59" y2="14"/><line x1="-48" y1="-12" x2="-48" y2="14"/><line x1="-37" y1="-12" x2="-37" y2="14"/><line x1="37" y1="-12" x2="37" y2="14"/><line x1="48" y1="-12" x2="48" y2="14"/><line x1="59" y1="-12" x2="59" y2="14"/></g>
+          <rect x="-26" y="-17" width="52" height="36" rx="8" fill="#5c7ba1"/>
+          <rect x="-18" y="-9" width="36" height="20" rx="5" fill="#dce8f2"/>
+          <circle cx="0" cy="27" r="5" fill="#e58a00"/>
+          <line x1="0" y1="19" x2="0" y2="22" stroke="#e58a00" stroke-width="3"/>
+        </g>
+        <!-- スキャンビーム -->
+        <polygon points="300,110 210,290 390,290" fill="#e58a00" opacity=".14"/>
+        <line x1="300" y1="110" x2="210" y2="290" stroke="#e58a00" stroke-width="2" stroke-dasharray="6 6" opacity=".55"/>
+        <line x1="300" y1="110" x2="390" y2="290" stroke="#e58a00" stroke-width="2" stroke-dasharray="6 6" opacity=".55"/>
+        <!-- 地面 -->
+        <ellipse cx="260" cy="345" rx="255" ry="52" fill="#bcd9a8"/>
+        <ellipse cx="260" cy="338" rx="235" ry="42" fill="#cfe6bd"/>
+        <!-- ソーラーパネル列 -->
+        <g>
+          <g transform="translate(150,296) skewX(-16)"><rect width="86" height="30" rx="3" fill="#34597e"/><g stroke="#7fa8c9" stroke-width="1.6"><line x1="0" y1="10" x2="86" y2="10"/><line x1="0" y1="20" x2="86" y2="20"/><line x1="22" y1="0" x2="22" y2="30"/><line x1="44" y1="0" x2="44" y2="30"/><line x1="66" y1="0" x2="66" y2="30"/></g></g>
+          <g transform="translate(262,296) skewX(-16)"><rect width="86" height="30" rx="3" fill="#34597e"/><g stroke="#7fa8c9" stroke-width="1.6"><line x1="0" y1="10" x2="86" y2="10"/><line x1="0" y1="20" x2="86" y2="20"/><line x1="22" y1="0" x2="22" y2="30"/><line x1="44" y1="0" x2="44" y2="30"/><line x1="66" y1="0" x2="66" y2="30"/></g></g>
+          <g transform="translate(206,330) skewX(-16)"><rect width="86" height="30" rx="3" fill="#3d6591"/><g stroke="#88b1d2" stroke-width="1.6"><line x1="0" y1="10" x2="86" y2="10"/><line x1="0" y1="20" x2="86" y2="20"/><line x1="22" y1="0" x2="22" y2="30"/><line x1="44" y1="0" x2="44" y2="30"/><line x1="66" y1="0" x2="66" y2="30"/></g></g>
+        </g>
+        <!-- 伸びた草（縁辺） -->
+        <g stroke="#2e9e6b" stroke-width="3.5" stroke-linecap="round" fill="none">
+          <path d="M118 330 q-4 -18 -12 -24 M118 330 q2 -16 10 -22 M118 330 q-1 -20 2 -26"/>
+          <path d="M405 322 q-4 -16 -11 -21 M405 322 q3 -15 10 -20 M405 322 q0 -18 2 -23"/>
+          <path d="M430 340 q-4 -14 -10 -18 M430 340 q3 -13 9 -17"/>
+        </g>
+        <!-- チェック吹き出し -->
+        <g transform="translate(398,180)">
+          <rect x="-64" y="-26" width="128" height="52" rx="12" fill="#ffffff" stroke="#e3e8dd"/>
+          <polygon points="-20,26 -6,26 -16,42" fill="#ffffff"/>
+          <circle cx="-38" cy="0" r="13" fill="#2e9e6b"/>
+          <path d="M-44 0 l5 5 l9 -10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="-16" y="6" font-size="15" font-weight="700" fill="#243038">草を発見!</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="strip">
+    <div class="strip-in rv">
+      <div class="stat"><div class="num"><b>2</b>ヶ所</div><div class="cap">実際の発電所で検証中</div></div>
+      <div class="stat"><div class="num"><b>24</b>ヶ月分</div><div class="cap">たまっている観測データ</div></div>
+      <div class="stat"><div class="num">月<b>1</b>回</div><div class="cap">レポートをお届け</div></div>
+      <div class="stat"><div class="num"><b>0</b>台</div><div class="cap">現地に置く機器（不要です）</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 30秒でわかる ============ -->
+<section id="about">
+  <div class="wrap">
+    <span class="sec-badge rv">30秒でわかる</span>
+    <h2 class="sec-title rv d1">しくみは、たったの3コマ。</h2>
+    <div class="steps3">
+      <div class="step3 rv"><span class="badge">その1</span>
+        <svg viewBox="0 0 200 110" aria-hidden="true">
+          <g transform="translate(100,30)">
+            <rect x="-40" y="-8" width="24" height="16" rx="3" fill="#3d5a80"/><rect x="16" y="-8" width="24" height="16" rx="3" fill="#3d5a80"/>
+            <rect x="-15" y="-12" width="30" height="24" rx="6" fill="#5c7ba1"/><rect x="-9" y="-6" width="18" height="12" rx="3" fill="#dce8f2"/>
+          </g>
+          <polygon points="100,44 66,92 134,92" fill="#e58a00" opacity=".15"/>
+          <line x1="100" y1="44" x2="66" y2="92" stroke="#e58a00" stroke-width="2" stroke-dasharray="5 5" opacity=".6"/>
+          <line x1="100" y1="44" x2="134" y2="92" stroke="#e58a00" stroke-width="2" stroke-dasharray="5 5" opacity=".6"/>
+          <ellipse cx="100" cy="96" rx="58" ry="10" fill="#cfe6bd"/>
+          <g transform="translate(74,86) skewX(-14)"><rect width="30" height="11" rx="2" fill="#34597e"/></g>
+          <g transform="translate(112,86) skewX(-14)"><rect width="30" height="11" rx="2" fill="#34597e"/></g>
+        </svg>
+        <h3>衛星が上から撮影</h3>
+        <p>ヨーロッパの観測衛星<b>「Sentinel-2（センチネル2）」</b>が、数日おきに発電所の上空を通って写真を撮っています。<b>現地への機器設置は不要</b>です。</p>
+      </div>
+      <div class="step3 rv d1"><span class="badge">その2</span>
+        <svg viewBox="0 0 200 110" aria-hidden="true">
+          <rect x="30" y="18" width="140" height="74" rx="10" fill="#f6f8f3" stroke="#e3e8dd"/>
+          <polyline points="45,78 70,72 95,60 120,64 145,40 160,44" fill="none" stroke="#2e9e6b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="145" cy="40" r="5" fill="#2e9e6b"/>
+          <circle cx="148" cy="66" r="22" fill="none" stroke="#e58a00" stroke-width="4"/>
+          <line x1="164" y1="82" x2="180" y2="98" stroke="#e58a00" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+        <h3>「緑の濃さ」を数字にする</h3>
+        <p>写真の色から、敷地がどれくらい緑色か＝<b>草の茂り具合</b>を数字にします<span class="term">専門用語で NDVI</span>。毎月の数字を並べると「去年より草が多い」がひと目でわかります。</p>
+      </div>
+      <div class="step3 rv d2"><span class="badge">その3</span>
+        <svg viewBox="0 0 200 110" aria-hidden="true">
+          <rect x="44" y="12" width="112" height="86" rx="10" fill="#ffffff" stroke="#e3e8dd"/>
+          <rect x="44" y="12" width="112" height="22" rx="10" fill="#e58a00"/>
+          <rect x="44" y="24" width="112" height="10" fill="#e58a00"/>
+          <text x="100" y="28" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">今月のレポート</text>
+          <circle cx="62" cy="48" r="7" fill="#2e9e6b"/><path d="M58.5 48 l2.5 2.5 l5 -5.5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <text x="76" y="52" font-size="10.5" fill="#243038">A発電所 … 問題なし</text>
+          <circle cx="62" cy="70" r="7" fill="#e58a00"/><text x="62" y="74" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">!</text>
+          <text x="76" y="74" font-size="10.5" fill="#243038">B発電所 … 草が増加</text>
+          <rect x="58" y="82" width="84" height="10" rx="5" fill="#fff4e2" stroke="#f2ddb8"/>
+          <text x="100" y="90" text-anchor="middle" font-size="7.5" fill="#c67600">→ 次の訪問で確認を</text>
+        </svg>
+        <h3>「行くべき場所」がわかる</h3>
+        <p>毎月のレポートで<b>「問題なし」か「見に行った方がよい」か</b>をお知らせ。草刈りや点検の訪問を、<b>必要な発電所から順に</b>計画できます。</p>
+      </div>
+    </div>
+    <p class="steps3-note rv">つまり——<b>「宇宙から毎月、草の見回りを代行してくれる」</b>サービスです。</p>
   </div>
 </section>
 
-<!-- ============ PROBLEM ============ -->
-<section id="problem">
+<!-- ============ こんなお困りごとに ============ -->
+<section class="worry-sec" id="worry">
   <div class="wrap">
-    <p class="sec-eyebrow rv">Problem</p>
-    <h2 class="sec-title rv d1">広い敷地、限られた人手。<br>植生の異変は、気づいた時には積み上がっている。</h2>
-    <div class="problems">
-      <div class="problem rv"><span class="no mono">ISSUE — 01</span>
-        <h3>数十haの敷地を、巡回では見きれない</h3>
-        <p>メガソーラーの敷地は数十ヘクタール。フェンス際・法面・隣接林縁まで、目視巡回だけで植生の変化を追い続けるのは現実的ではありません。</p></div>
-      <div class="problem rv d1"><span class="no mono">ISSUE — 02</span>
-        <h3>草刈りのタイミングが読めない</h3>
-        <p>行ってみたら手遅れ、行ったけど不要だった——。繁茂の進み方はサイトごとに違い、経験則だけでは訪問計画が空振りします。</p></div>
-      <div class="problem rv d2"><span class="no mono">ISSUE — 03</span>
-        <h3>影による売電損失は静かに進行する</h3>
-        <p>縁辺部の樹木・雑草がパネルに影を落とすと、発電量は静かに削られます。「いつから・どこが」の記録がないと、対策の優先順位もつけられません。</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ FEATURES ============ -->
-<section class="feat-sec" id="feature">
-  <div class="wrap">
-    <p class="sec-eyebrow rv">What Sunscout Does</p>
-    <h2 class="sec-title rv d1">衛星の植生指標で、<br>「訪問すべきサイト」から順に並べ替える。</h2>
-    <p class="sec-lead rv d2">SUNSCOUT が提供するのは高精細な絵ではなく、<b>意思決定に使える数値の時系列</b>です。</p>
-    <div class="features">
-      <div class="feat rv">
-        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b56d00" stroke-width="1.8" stroke-linecap="round"><path d="M3 17l4-6 4 3 4-8 6 9"/><path d="M3 21h18"/></svg></div>
-        <h3>月次NDVI監視</h3>
-        <p>Sentinel-2 L2A の植生指標（NDVI）を、SCL バンドによる雲マスク付きで毎月算出。敷地全体の「緑の濃さ」を median 値で頑健に追跡します。</p>
-        <span class="tag">Sentinel-2 L2A / 10m / SCLマスク</span>
+    <span class="sec-badge rv">こんな時に役立ちます</span>
+    <h2 class="sec-title rv d1">発電所の「草」、こんなお悩みありませんか？</h2>
+    <div class="worries">
+      <div class="worry rv">
+        <div class="fuki">「発電所が遠くて、なかなか見に行けない…」</div>
+        <p>車で片道1時間の発電所を月に何度も見回るのは大変。SUNSCOUTなら<b>行かずに毎月チェック</b>できるので、見回りの回数を減らせます。</p>
       </div>
-      <div class="feat rv d1">
-        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b56d00" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v4M16 3v4M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/><path d="M9 14l2 2 4-4"/></svg></div>
-        <h3>前年同月比較</h3>
-        <p>冬に枯れて夏に茂るのは正常な季節変動。前年同月との差分で見ることで、季節と本当の変化を切り分け、冬季の低NDVIを「異変」と誤読しない設計です。</p>
-        <span class="tag">YoY差分 / 季節変動と分離</span>
+      <div class="worry rv d1">
+        <div class="fuki">「行ってみたら、草がボーボーで手遅れだった…」</div>
+        <p>草は気づかないうちに伸びて、パネルに影を落とすと発電量が減ります。<b>伸び始めのサイン</b>を毎月の数字でつかめば、手遅れになる前に動けます。</p>
       </div>
-      <div class="feat rv d2">
-        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b56d00" stroke-width="1.8" stroke-linecap="round"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h12a1 1 0 001-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
-        <h3>訪問前提案ドラフト</h3>
-        <p>観測値と積算根拠つきの提案文ドラフトを自動生成。損失試算は仮定をすべて開示し、金額は必ず「幅」で提示——確定は現地実測後、が原則です。</p>
-        <span class="tag">根拠全開示 / 幅で提示</span>
+      <div class="worry rv d2">
+        <div class="fuki">「草刈り業者を呼ぶタイミングがわからない…」</div>
+        <p>「去年の同じ月より草が多い」というデータがあれば、<b>頼みどき・優先する発電所</b>を根拠を持って決められます。レポートはそのまま報告資料にも使えます。</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ LIVE DEMO (real data) ============ -->
-<section class="demo-sec" id="demo">
+<!-- ============ 実際のデータ ============ -->
+<section class="data-sec" id="data">
   <div class="wrap">
-    <p class="sec-eyebrow rv">Real Data</p>
-    <h2 class="sec-title rv d1" style="color:#fff">デモではなく、実測です。</h2>
-    <p class="sec-lead rv d2">以下は実在する愛知県の発電所2サイトの<b style="color:#fff">実測値</b>——
-    敷地輪郭・面積・NDVI時系列・欠測月まで、すべて本物のデータです（事業者名のみサンプル表記）。</p>
-    <p class="demo-note rv d2">SOURCE: Copernicus Sentinel-2 L2A ・ 2024-01 → 2025-12 ・ SCL cloud-mask ・ monthly median</p>
+    <span class="sec-badge rv">実際のデータ</span>
+    <h2 class="sec-title rv d1">本物の発電所を、2年間見守ってみました。</h2>
+    <p class="sec-lead rv d2">下のグラフは、愛知県にある<b>実在の発電所2ヶ所</b>を実際に衛星で観測した記録です。
+    ボタンで発電所を切り替えて、草の様子の違いを見てみてください（会社名だけ仮名にしています）。</p>
+    <div class="honest-chip rv d2">✅ 数値・敷地の形・雲で見えなかった月まで、すべて本物の記録です</div>
 
-    <div class="site-tabs rv" role="tablist" aria-label="監視サイト切り替え">
+    <div class="site-tabs rv" role="tablist" aria-label="発電所の切り替え">
       <button class="stab on" role="tab" aria-selected="true" data-site="0">
-        <span class="nm">A発電所 — 臨海造成地・平地</span>
-        <span class="sub">愛知県田原市 ・ 64.6 ha ・ 64.0 MW</span>
+        <span class="nm">🏭 A発電所（海ぞいの平地）</span>
+        <span class="sub">愛知県田原市 ・ 東京ドーム約14個分の広さ</span>
       </button>
       <button class="stab" role="tab" aria-selected="false" data-site="1">
-        <span class="nm">B発電所 — 山間・森林隣接</span>
-        <span class="sub">愛知県豊田市 ・ 66.7 ha ・ 41.3 MW</span>
+        <span class="nm">⛰️ B発電所（山あい・森のとなり）</span>
+        <span class="sub">愛知県豊田市 ・ 東京ドーム約14個分の広さ</span>
       </button>
     </div>
 
-    <div class="demo-grid rv">
+    <div class="data-grid rv">
       <div class="dcard">
-        <h4>Site / AOI</h4>
+        <h4>📍 発電所の敷地</h4>
         <div class="aoi-box">
-          <svg id="aoiSvg" viewBox="0 0 320 240" aria-label="監視対象の敷地輪郭"></svg>
+          <svg id="aoiSvg" viewBox="0 0 320 240" aria-label="発電所の敷地の形"></svg>
           <div class="aoi-cap" id="aoiCap"></div>
         </div>
         <div class="kpi-grid">
-          <div class="dkpi"><div class="l">敷地面積</div><div class="v" id="dArea">—</div></div>
-          <div class="dkpi"><div class="l">FIT認定出力</div><div class="v" id="dOut">—</div></div>
-          <div class="dkpi"><div class="l">最新月 NDVI</div><div class="v" id="dNdvi">—</div></div>
-          <div class="dkpi"><div class="l">前年同月差</div><div class="v" id="dYoy">—</div></div>
+          <div class="dkpi"><div class="l">敷地の広さ</div><div class="v" id="dArea">—</div></div>
+          <div class="dkpi"><div class="l">発電の規模</div><div class="v" id="dOut">—</div></div>
+          <div class="dkpi"><div class="l">いまの緑の濃さ</div><div class="v" id="dNdvi">—</div></div>
+          <div class="dkpi"><div class="l">去年の同じ月との差</div><div class="v" id="dYoy">—</div></div>
         </div>
       </div>
       <div class="dcard chart-zone">
         <div class="chart-head2">
-          <h3>月次 NDVI — 当年 vs 前年（敷地 median）</h3>
-          <div class="legend2">
-            <span><i style="background:#39c9a6"></i>2025</span>
-            <span><i style="background:#7d84e8"></i>2024</span>
-            <span class="gap">× 欠測（雲被覆）</span>
-          </div>
+          <h3>📈 緑の濃さの移り変わり（月ごと）</h3>
+          <span class="chart-hint">グラフに触れると各月の数字が見られます</span>
         </div>
-        <svg id="lchart" role="img" aria-label="月次NDVIの当年・前年比較チャート"></svg>
+        <div class="howto">
+          <div><b><i style="background:#1c8f5f"></i>緑の線 ＝ 今年</b>この線が去年より上なら「草が増えている」サイン。</div>
+          <div><b><i style="background:#8a90d8"></i>むらさきの点線 ＝ 去年</b>今年と見比べるための、去年の記録です。</div>
+          <div><b><span style="color:#d83f30;font-weight:800;margin-right:6px">×</span>印 ＝ 雲で見えなかった月</b>ごまかさず「見えなかった」と正直に表示します。</div>
+        </div>
+        <svg id="lchart" role="img" aria-label="緑の濃さ（NDVI）の今年と去年の比較グラフ"></svg>
         <div class="status-line" id="statusLine"></div>
       </div>
     </div>
 
-    <div class="demo-more rv">
-      <a class="btn pri" href="./demo.html">フルデモ画面を開く — 地図・提案ドラフト付き</a>
-      <p>MAP TILES: 国土地理院（地理院タイル） ／ 提案文ドラフト・損失試算の積算根拠を全開示</p>
+    <div class="data-more rv">
+      <a class="btn pri" href="./demo.html">デモ画面で本物のレポートを見る</a>
+      <p>航空写真の地図・毎月の報告文・費用の目安まで、実際の画面をさわって確かめられます</p>
     </div>
   </div>
 </section>
 
-<!-- ============ HONESTY ============ -->
-<section class="honest-sec" id="honest">
+<!-- ============ よくある質問 ============ -->
+<section id="faq">
   <div class="wrap">
-    <p class="sec-eyebrow rv">Honest Limits</p>
-    <h2 class="sec-title rv d1">できないことも、先にお伝えします。</h2>
-    <p class="sec-lead rv d2">衛星モニタリングは万能ではありません。限界を隠さないことが、使える判断材料の条件だと考えています。</p>
-    <div class="honest-list rv">
-      <div class="honest">
-        <div class="h-k">パネル1枚の影は<br>見えません<span class="mono">RESOLUTION — 10m</span></div>
-        <div class="h-v">Sentinel-2 の分解能は10m。<b>パネル単位の影検出はできず</b>、見えるのは「敷地の植生傾向」です。
-        だからこそ SUNSCOUT の役割は点検の代替ではなく、<span class="pos">訪問の優先順位づけと、行く前の根拠づくり</span>に絞っています。</div>
-      </div>
-      <div class="honest">
-        <div class="h-k">曇天の月は<br>「欠測」になります<span class="mono">GAP — 8.3〜12.5%</span></div>
-        <div class="h-v">日本の空は曇ります。有効画素が2割を切る月は<b>補間でごまかさず「欠測」と明示</b>します。
-        実測では24ヶ月中2〜3ヶ月が欠測でした。<span class="pos">欠測率を最初から定量化して提示する</span>のが SUNSCOUT の流儀です。</div>
-      </div>
-      <div class="honest">
-        <div class="h-k">金額は「幅」で<br>しか出しません<span class="mono">ESTIMATE — RANGE ONLY</span></div>
-        <div class="h-v">損失試算は日照時間・影響係数など<b>仮定をすべて開示した上での概算</b>です。断定額は出しません。
-        <span class="pos">確定は現地実測後</span>——提案書には必ず幅で記載する運用を前提にしています。</div>
-      </div>
+    <span class="sec-badge rv">よくある質問</span>
+    <h2 class="sec-title rv d1">できること・できないことを、正直に。</h2>
+    <p class="sec-lead rv d2">衛星は万能ではありません。先に限界をお伝えするのが、SUNSCOUTの方針です。</p>
+    <div class="faq-list rv">
+      <details class="faq" open>
+        <summary><span class="q">Q</span>パネル1枚1枚の影や汚れも見えますか？<svg class="arw" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <div class="faq-a"><span class="a">A</span><p><b>見えません。</b>衛星写真の1マスは10m四方（教室ひと部屋分くらい）なので、わかるのは<b>敷地全体の草の傾向</b>です。
+        だからSUNSCOUTは「点検の代わり」ではなく、<span class="pos">「どの発電所から見に行くべきか」を決めるための道具</span>に徹しています。細かい点検は現地での目視が確実です。</p></div>
+      </details>
+      <details class="faq">
+        <summary><span class="q">Q</span>くもりの日はどうなるんですか？<svg class="arw" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <div class="faq-a"><span class="a">A</span><p>雲の下は写らないので、くもりが続いた月は<b>「見えなかった月」としてそのまま表示</b>します（グラフの×印）。
+        それらしい数字をでっち上げることはしません。実際の記録では<span class="pos">2年間のうち見えなかったのは2〜3ヶ月</span>でした。</p></div>
+      </details>
+      <details class="faq">
+        <summary><span class="q">Q</span>草で発電がいくら損しているか、金額もわかりますか？<svg class="arw" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <div class="faq-a"><span class="a">A</span><p>ざっくりの目安を<b>「〇円〜〇円」という幅</b>でお出しします。計算に使った前提（日照時間や単価など）もすべて開示します。
+        ただしこれは優先順位を決めるための概算で、<span class="pos">正確な金額は現地で確認してから</span>。断定した金額をお約束することはありません。</p></div>
+      </details>
+      <details class="faq">
+        <summary><span class="q">Q</span>何か機械を設置したり、工事したりする必要はありますか？<svg class="arw" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <div class="faq-a"><span class="a">A</span><p><b>いっさい不要です。</b>発電所の住所がわかれば、衛星の観測データだけで始められます。
+        カメラやセンサーの購入費・電気代・通信費はかかりません。</p></div>
+      </details>
+      <details class="faq">
+        <summary><span class="q">Q</span>どのくらいの頻度で報告が届きますか？<svg class="arw" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <div class="faq-a"><span class="a">A</span><p><b>月に1回</b>、発電所ごとのレポートをお届けします。「問題なし」の月も、その根拠のグラフつきでご報告します。
+        急いで対応が必要そうな変化があれば、レポートの中でわかるように印をつけます。</p></div>
+      </details>
     </div>
   </div>
 </section>
 
-<!-- ============ PIPELINE ============ -->
-<section class="pipe-sec" id="how">
+<!-- ============ ご利用の流れ ============ -->
+<section class="flow-sec" id="flow">
   <div class="wrap">
-    <p class="sec-eyebrow rv">How It Works</p>
-    <h2 class="sec-title rv d1">公開データだけで、ここまで辿り着く。</h2>
-    <p class="sec-lead rv d2">特別なセンサーの設置は不要。国の公表情報と衛星オープンデータを組み合わせた4段パイプラインです。</p>
-    <div class="pipeline">
-      <div class="pstep rv"><h3>発電所を特定</h3>
-        <p>FIT事業計画認定情報（経産省公表）から対象発電所の所在地・認定出力を取得。</p>
-        <span class="src">FIT公表情報</span></div>
-      <div class="pstep rv d1"><h3>敷地輪郭を確定</h3>
-        <p>ジオコーディングで概略位置を求め、航空写真から敷地ポリゴンをデジタイズ。面積とFIT出力の整合を検証。</p>
-        <span class="src">国土地理院 API・地理院タイル</span></div>
-      <div class="pstep rv d2"><h3>衛星で毎月観測</h3>
-        <p>Sentinel-2 L2A を Statistical API で敷地集約。SCLバンドで雲・影・雪を除外し、NDVI median を算出。</p>
-        <span class="src">Copernicus Data Space</span></div>
-      <div class="pstep rv d3"><h3>レポート化</h3>
-        <p>前年同月比較・欠測明示・積算根拠つきの月次レポートと提案ドラフトを生成。</p>
-        <span class="src">月1回更新</span></div>
+    <span class="sec-badge rv">ご利用の流れ</span>
+    <h2 class="sec-title rv d1">お客様にしていただくのは、最初の1歩だけ。</h2>
+    <div class="flow">
+      <div class="fstep rv"><div class="no">1</div>
+        <h3>住所を教えてもらう</h3>
+        <p>発電所の住所（または場所のわかる情報）をお知らせください。</p>
+        <span class="you u">お客様がすること</span></div>
+      <div class="fstep rv d1"><div class="no">2</div>
+        <h3>敷地の範囲を確認</h3>
+        <p>航空写真で敷地の形を確認し、見守る範囲を確定します。</p>
+        <span class="you s">SUNSCOUTがやります</span></div>
+      <div class="fstep rv d2"><div class="no">3</div>
+        <h3>衛星が毎月チェック</h3>
+        <p>雲をよけながら観測し、緑の濃さを毎月記録していきます。</p>
+        <span class="you s">SUNSCOUTがやります</span></div>
+      <div class="fstep rv d2"><div class="no">4</div>
+        <h3>レポートが届く</h3>
+        <p>「問題なし／見に行った方がよい」がひと目でわかる月次レポートをお届けします。</p>
+        <span class="you s">SUNSCOUTがやります</span></div>
     </div>
+    <p class="flow-note rv">機器の設置・工事・立ち会いは、いっさい必要ありません。</p>
   </div>
 </section>
 
-<!-- ============ FINAL CTA ============ -->
+<!-- ============ 最後のCTA ============ -->
 <section class="final">
   <div class="wrap">
-    <h2 class="rv">まず、実測データからご覧ください。</h2>
-    <p class="rv d1">実在発電所24ヶ月分の観測をそのまま公開しています。<br>数字を見てから、話を進めましょう。</p>
+    <h2 class="rv">まずは、実際の画面を<br>さわってみてください。</h2>
+    <p class="rv d1">実在の発電所2年分の本物のデータで、レポート画面をそのまま体験できます。</p>
     <div class="cta-row rv d2">
-      <a class="btn pri" href="./demo.html">フルデモ画面を開く</a>
-      <a class="btn ghost" href="#demo">実測チャートに戻る</a>
+      <a class="btn pri" href="./demo.html">デモ画面をさわってみる</a>
+      <a class="btn sub" href="#data">グラフをもう一度見る</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="foot-wrap">
-    <div class="logo">SUN<b>SCOUT</b> <span style="font-size:10px;letter-spacing:.2em;color:rgba(232,237,245,.4);margin-left:8px">SATELLITE VEGETATION MONITORING</span></div>
+    <div class="logo">SUN<b>SCOUT</b> <span style="font-size:11px;color:rgba(240,244,240,.5);margin-left:8px">サンスカウト — 太陽光発電所の衛星見守りサービス</span></div>
     <div class="foot-attr">
       データ出典:
       Copernicus Sentinel-2 L2A（Contains modified Copernicus Sentinel data 2024–2025）／
       <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院（地理院タイル・ジオコーディング）</a>／
       FIT事業計画認定情報（経済産業省）。<br>
-      雲被覆月は「欠測」と明示し、補間値は使用していません。損失試算は優先度判断用の概算であり、金額の確定は現地実測後に行います。
+      雲で観測できなかった月は「見えなかった月」として明示し、推定値で埋めることはしていません。
+      損失の試算は優先順位を決めるための概算であり、金額の確定は現地確認後に行います。
     </div>
-    <span class="foot-flag">DEMO SITE ／ 事業者名はサンプル表記・数値は実測 ／ 内部R&amp;D・検証用</span>
+    <span class="foot-flag">デモサイト ／ 会社名は仮名・数値は実測 ／ 内部R&amp;D・検証用</span>
   </div>
 </footer>
 
@@ -472,10 +544,10 @@ const MONTHLY = {
  shinshiro_slope:[{m:"2024-01",v:0.104},{m:"2024-02",v:0.125},{m:"2024-03",v:0.136},{m:"2024-04",v:0.158},{m:"2024-05",v:0.229},{m:"2024-06",v:null},{m:"2024-07",v:0.214},{m:"2024-08",v:0.162},{m:"2024-09",v:0.122},{m:"2024-10",v:0.14},{m:"2024-11",v:0.125},{m:"2024-12",v:0.147},{m:"2025-01",v:0.112},{m:"2025-02",v:0.112},{m:"2025-03",v:0.094},{m:"2025-04",v:0.15},{m:"2025-05",v:null},{m:"2025-06",v:0.201},{m:"2025-07",v:0.2},{m:"2025-08",v:0.157},{m:"2025-09",v:0.136},{m:"2025-10",v:0.136},{m:"2025-11",v:0.128},{m:"2025-12",v:0.125}]
 };
 const SITES = [
- {id:"tahara_flat", nm:"A発電所（サンプル社名）", ad:"愛知県田原市（臨海造成地・平地）",
+ {id:"tahara_flat", nm:"A発電所（仮名）", ad:"愛知県田原市（海ぞいの平地）",
   kw:64000, ha:64.6, center:[137.2686,34.7136],
   ring:[[137.268484,34.71911],[137.273698,34.714666],[137.273312,34.71396],[137.27138,34.710344],[137.270308,34.708228],[137.268806,34.708139],[137.267196,34.709286],[137.265909,34.710873],[137.263656,34.715459]]},
- {id:"shinshiro_slope", nm:"B発電所（サンプル社名）", ad:"愛知県豊田市（山間・森林隣接）",
+ {id:"shinshiro_slope", nm:"B発電所（仮名）", ad:"愛知県豊田市（山あい・森のとなり）",
   kw:41250, ha:66.7, center:[137.2706,35.1537],
   ring:[[137.265501,35.159056],[137.267218,35.158091],[137.26872,35.156688],[137.270007,35.155898],[137.271938,35.155021],[137.276766,35.154319],[137.276874,35.151074],[137.274942,35.150811],[137.274299,35.150284],[137.274084,35.148267],[137.272689,35.148003],[137.271295,35.150021],[137.270973,35.150986],[137.268505,35.151249],[137.265501,35.151775],[137.264321,35.153004],[137.264214,35.154583],[137.265029,35.155495],[137.265286,35.157039]]},
 ];
@@ -500,10 +572,10 @@ function status(s){
 }
 const gapCount = s => series(s).filter(r=>r.v==null).length;
 
-/* ---------- AOI ポリゴン描画（経緯度→ローカル投影） ---------- */
+/* ---------- 敷地ポリゴン描画（経緯度→ローカル投影・表示用） ---------- */
 function renderAoi(site){
   const svg=document.getElementById("aoiSvg");
-  const W=320,H=240,P=26;
+  const W=320,H=240,P=28;
   const lons=site.ring.map(p=>p[0]), lats=site.ring.map(p=>p[1]);
   const minLo=Math.min(...lons),maxLo=Math.max(...lons),minLa=Math.min(...lats),maxLa=Math.max(...lats);
   const kx=Math.cos((minLa+maxLa)/2*Math.PI/180);
@@ -514,17 +586,11 @@ function renderAoi(site){
     const x=ox+(lo-minLo)*kx*sc, y=H-(oy+(la-minLa)*sc);
     return x.toFixed(1)+","+y.toFixed(1);
   }).join(" ");
-  let grid="";
-  for(let gx=20;gx<W;gx+=30) grid+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="rgba(255,255,255,.035)" stroke-width="1"/>`;
-  for(let gy=20;gy<H;gy+=30) grid+=`<line x1="0" y1="${gy}" x2="${W}" y2="${gy}" stroke="rgba(255,255,255,.035)" stroke-width="1"/>`;
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-  svg.innerHTML = grid +
-    `<polygon points="${pts}" fill="rgba(229,138,0,.13)" stroke="#e58a00" stroke-width="2" stroke-linejoin="round">
-       <animate attributeName="opacity" values="0;1" dur="0.6s" fill="freeze"/>
-     </polygon>` +
-    `<polygon points="${pts}" fill="none" stroke="rgba(255,181,71,.4)" stroke-width="6" stroke-linejoin="round" opacity=".25"/>`;
+  svg.innerHTML =
+    `<polygon points="${pts}" fill="rgba(229,138,0,.16)" stroke="#c67600" stroke-width="2.5" stroke-linejoin="round"/>`;
   document.getElementById("aoiCap").innerHTML =
-    `AOI ${site.ha} ha ・ 実測輪郭（EPSG:4326）<br>中心 ${site.center[1].toFixed(4)}N, ${site.center[0].toFixed(4)}E`;
+    `オレンジの線 ＝ 見守っている範囲（実測の形）<br>${site.ad}`;
 }
 
 /* ---------- 月次チャート ---------- */
@@ -532,7 +598,7 @@ const ML=["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月"
 function renderChart(site){
   const svg=document.getElementById("lchart");
   const W=svg.clientWidth||680, H=250;
-  const P={l:46,r:14,t:14,b:28};
+  const P={l:20,r:14,t:26,b:30};
   const iw=W-P.l-P.r, ih=H-P.t-P.b;
   const a=series(site);
   const cur=a.filter(r=>r.m.startsWith("2025")), prev=a.filter(r=>r.m.startsWith("2024"));
@@ -540,24 +606,30 @@ function renderChart(site){
   const x=i=>P.l+iw*(i+0.5)/12, y=v=>P.t+ih*(1-v/vmax);
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   let g="";
-  for(let k=0;k<=3;k++){
-    const vv=vmax*k/3, yy=y(vv);
-    g+=`<line x1="${P.l}" y1="${yy}" x2="${W-P.r}" y2="${yy}" stroke="rgba(255,255,255,.07)"/>`+
-       `<text x="${P.l-8}" y="${yy+3.5}" text-anchor="end" font-size="9.5" fill="rgba(232,237,245,.45)" font-family="Consolas,monospace">${vv.toFixed(2)}</text>`;
+  /* 夏の帯（草が伸びやすい時期） */
+  const bx0=x(5)-iw/24, bx1=x(7)+iw/24;
+  g+=`<rect x="${bx0}" y="${P.t}" width="${bx1-bx0}" height="${ih}" fill="#fff4e2"/>`+
+     `<text x="${(bx0+bx1)/2}" y="${P.t-8}" text-anchor="middle" font-size="11" font-weight="700" fill="#c67600">☀ 夏は草が伸びやすい時期</text>`;
+  for(let k=1;k<=3;k++){
+    const yy=y(vmax*k/3);
+    g+=`<line x1="${P.l}" y1="${yy}" x2="${W-P.r}" y2="${yy}" stroke="#eef1ea"/>`;
   }
-  for(let i=0;i<12;i++) g+=`<text x="${x(i)}" y="${H-9}" text-anchor="middle" font-size="9.5" fill="rgba(232,237,245,.45)">${ML[i]}</text>`;
+  g+=`<line x1="${P.l}" y1="${y(0)}" x2="${W-P.r}" y2="${y(0)}" stroke="#dde3d6"/>`;
+  g+=`<text x="${P.l+2}" y="${P.t+12}" font-size="10.5" fill="#8b98a1">↑ 緑が濃い（草が多い）</text>`;
+  g+=`<text x="${P.l+2}" y="${y(0)-6}" font-size="10.5" fill="#8b98a1">↓ 緑がうすい（草が少ない）</text>`;
+  for(let i=0;i<12;i++) g+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="10.5" fill="#5b6a74">${ML[i]}</text>`;
   const path=arr=>{
     let d="",pen=false;
     arr.forEach((r,i)=>{ if(r.v==null){pen=false;return;}
       d+=(pen?"L":"M")+x(i).toFixed(1)+" "+y(r.v).toFixed(1)+" "; pen=true; });
     return d;
   };
-  g+=`<path class="ln" d="${path(prev)}" fill="none" stroke="#7d84e8" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" opacity=".8"/>`;
-  g+=`<path class="ln" d="${path(cur)}" fill="none" stroke="#39c9a6" stroke-width="2.5" stroke-linecap="round"/>`;
-  cur.forEach((r,i)=>{if(r.v!=null)g+=`<circle cx="${x(i)}" cy="${y(r.v)}" r="3.6" fill="#39c9a6" stroke="#0a111e" stroke-width="2"/>`;});
-  prev.forEach((r,i)=>{if(r.v!=null)g+=`<circle cx="${x(i)}" cy="${y(r.v)}" r="2.8" fill="#7d84e8" stroke="#0a111e" stroke-width="2" opacity=".85"/>`;});
+  g+=`<path d="${path(prev)}" fill="none" stroke="#8a90d8" stroke-width="2.2" stroke-dasharray="6 5" stroke-linecap="round" opacity=".9"/>`;
+  g+=`<path d="${path(cur)}" fill="none" stroke="#1c8f5f" stroke-width="3" stroke-linecap="round"/>`;
+  cur.forEach((r,i)=>{if(r.v!=null)g+=`<circle cx="${x(i)}" cy="${y(r.v)}" r="4" fill="#1c8f5f" stroke="#ffffff" stroke-width="2"/>`;});
+  prev.forEach((r,i)=>{if(r.v!=null)g+=`<circle cx="${x(i)}" cy="${y(r.v)}" r="3" fill="#8a90d8" stroke="#ffffff" stroke-width="2" opacity=".9"/>`;});
   [cur,prev].forEach((arr,ai)=>arr.forEach((r,i)=>{
-    if(r.v==null)g+=`<text x="${x(i)+(ai?5:-5)}" y="${P.t+ih-2}" text-anchor="middle" font-size="11" fill="#ff8d80" font-family="Consolas,monospace">×</text>`;
+    if(r.v==null)g+=`<text x="${x(i)+(ai?6:-6)}" y="${P.t+ih-4}" text-anchor="middle" font-size="13" font-weight="700" fill="#d83f30">×</text>`;
   }));
   g+=`<rect id="hit2" x="${P.l}" y="${P.t}" width="${iw}" height="${ih}" fill="transparent"/>`;
   svg.innerHTML=g;
@@ -568,11 +640,11 @@ function renderChart(site){
     const mi=Math.max(0,Math.min(11,Math.floor((e.clientX-rect.left-P.l*(rect.width/W))/(iw*(rect.width/W)/12))));
     const c=cur[mi],p=prev[mi];
     tip.style.display="block";
-    tip.style.left=Math.min(e.clientX+14,window.innerWidth-190)+"px";
+    tip.style.left=Math.min(e.clientX+14,window.innerWidth-200)+"px";
     tip.style.top=(e.clientY-14)+"px";
-    tip.innerHTML=`<div class="t">${ML[mi]}</div>
-      <div><i style="background:#39c9a6"></i>2025: <b>${c&&c.v!=null?c.v.toFixed(3):"欠測（雲被覆）"}</b></div>
-      <div><i style="background:#7d84e8"></i>2024: <b>${p&&p.v!=null?p.v.toFixed(3):"欠測（雲被覆）"}</b></div>`;
+    tip.innerHTML=`<div class="t">${ML[mi]}の緑の濃さ</div>
+      <div><i style="background:#1c8f5f"></i>今年: <b>${c&&c.v!=null?c.v.toFixed(3):"雲で見えず"}</b></div>
+      <div><i style="background:#8a90d8"></i>去年: <b>${p&&p.v!=null?p.v.toFixed(3):"雲で見えず"}</b></div>`;
   });
   hit.addEventListener("mouseleave",()=>{tip.style.display="none";});
 }
@@ -580,8 +652,8 @@ function renderChart(site){
 /* ---------- KPI・ステータス ---------- */
 function renderKpi(site){
   const last=latestObs(site), yoy=yoyDiff(site);
-  document.getElementById("dArea").innerHTML=site.ha+" <small>ha</small>";
-  document.getElementById("dOut").innerHTML=(site.kw/1000).toFixed(1)+" <small>MW</small>";
+  document.getElementById("dArea").innerHTML=site.ha+" <small>ヘクタール</small>";
+  document.getElementById("dOut").innerHTML=(site.kw/1000).toFixed(1)+" <small>メガワット</small>";
   document.getElementById("dNdvi").innerHTML=last?last.v.toFixed(3)+` <small>(${parseInt(last.m.slice(5))}月)</small>`:"—";
   const ke=document.getElementById("dYoy");
   if(yoy==null){ke.textContent="—";ke.className="v";}
@@ -592,37 +664,30 @@ function renderStatus(site){
   const el=document.getElementById("statusLine");
   if(st==="ok"){
     el.className="status-line st-ok";
-    el.innerHTML=`<span class="stag">良好 ／ 定期報告のみ</span>
-    直近24ヶ月のNDVIは低位で安定（最新 <b>${last.v.toFixed(3)}</b>、前年同月差 <b>${(yoy>0?"+":"")+yoy.toFixed(3)}</b>、欠測 ${gapCount(site)}/24ヶ月）。植生による発電影響の兆候はありません。`;
+    el.innerHTML=`<span class="stag">✅ いまのところ問題なし</span>
+    この2年間、緑の濃さはずっと低いまま安定しています。草がパネルの発電をじゃましている気配はありません。<b>定期レポートの確認だけでOK</b>です。`;
   }else{
     el.className="status-line st-watch";
-    el.innerHTML=`<span class="stag">監視 ／ 次回訪問時の目視確認を推奨</span>
-    夏季（6〜8月）のNDVIが <b>${peak.toFixed(2)}</b> まで上昇——縁辺部の季節的な植生繁茂が推定されます（最新月は <b>${last.v.toFixed(3)}</b> に低下・冬季、欠測 ${gapCount(site)}/24ヶ月）。`;
+    el.innerHTML=`<span class="stag">⚠️ 夏に草が増えるサインあり</span>
+    夏（6〜8月）に緑の濃さが <b>${peak.toFixed(2)}</b> まで上がっています。敷地のふち（森に近いあたり）で夏に草が茂っていると考えられます。<b>次に訪問するとき、現地で見ておくのがおすすめ</b>です。`;
   }
 }
 
 /* ---------- タブ・初期化 ---------- */
 let activeSite=SITES[0];
-function renderDemo(){ renderAoi(activeSite); renderChart(activeSite); renderKpi(activeSite); renderStatus(activeSite); }
+function renderData(){ renderAoi(activeSite); renderChart(activeSite); renderKpi(activeSite); renderStatus(activeSite); }
 document.querySelectorAll(".stab").forEach(b=>{
   b.addEventListener("click",()=>{
     document.querySelectorAll(".stab").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-selected","false");});
     b.classList.add("on"); b.setAttribute("aria-selected","true");
     activeSite=SITES[+b.dataset.site];
-    renderDemo();
+    renderData();
   });
 });
 window.addEventListener("resize",()=>renderChart(activeSite));
-renderDemo();
+renderData();
 
-/* ---------- nav 背景切替 ---------- */
-const nav=document.getElementById("nav");
-const hero=document.querySelector(".hero");
-addEventListener("scroll",()=>{
-  nav.classList.toggle("solid", scrollY > hero.offsetHeight-80);
-},{passive:true});
-
-/* ---------- scroll reveal ---------- */
+/* ---------- scroll reveal（IO不発時は3秒で全表示の保険つき） ---------- */
 const rvEls=[...document.querySelectorAll(".rv")];
 if("IntersectionObserver" in window){
   const io=new IntersectionObserver(es=>es.forEach(e=>{
@@ -630,7 +695,6 @@ if("IntersectionObserver" in window){
   }),{threshold:.12,rootMargin:"0px 0px -6% 0px"});
   rvEls.forEach(el=>io.observe(el));
 }
-/* 保険: 何らかの理由でIOが発火しなくても3秒後には全て表示する */
 setTimeout(()=>rvEls.forEach(el=>el.classList.add("in")),3000);
 </script>
 </body>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUNSCOUT — 月次植生モニタリング（実データデモ）</title>
+<style>
+  :root{
+    --bg:#eceef2; --bg2:#f6f8fa; --panel:#ffffff;
+    --line:#e4e8ee; --line2:#cfd6df;
+    --ink:#1d2733; --ink-soft:#33414f; --mut:#5a6472; --mut2:#8a94a2;
+    --amber:#e58a00; --amber-dim:#b56d00;
+    --alert:#d83f30; --ok:#0f8f4f;
+    --s-cur:#1f8f79; --s-prev:#5158cf;
+    --shadow:0 1px 2px rgba(23,33,48,.06),0 1px 3px rgba(23,33,48,.05);
+    --shadow-md:0 6px 20px rgba(23,33,48,.10);
+    --f-disp:"Segoe UI Variable Display","Avenir Next","Segoe UI",system-ui,sans-serif;
+    --f-mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --f-body:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--f-body);overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+  a{color:var(--amber-dim);text-decoration:underline}
+
+  .app{display:grid;grid-template-columns:300px minmax(0,1fr) 384px;grid-template-rows:60px minmax(0,1fr);height:100vh}
+
+  /* ---- top ---- */
+  .topbar{grid-column:1/-1;display:flex;align-items:center;gap:18px;padding:0 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .brand{font-family:var(--f-disp);font-weight:800;font-size:19px;letter-spacing:.01em;color:var(--ink)}
+  .brand b{color:var(--amber)}
+  .brand .sub{font-size:10px;color:var(--mut);letter-spacing:.14em;margin-left:10px;text-transform:uppercase;font-weight:600}
+  .cadence{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11.5px;color:var(--ink);
+    background:#f0f6f1;border:1px solid #cfe6d5;border-radius:8px;padding:6px 12px}
+  .cadence .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(15,143,79,.15)}
+  .cadence span{color:var(--mut)}
+  .top-src{margin-left:auto;font-size:10.5px;color:var(--mut2)}
+
+  /* ---- left ---- */
+  .rail{border-right:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;min-height:0}
+  .rail-head{padding:16px 18px 10px;display:flex;justify-content:space-between;align-items:baseline}
+  .rail-head h2{font-size:11px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase;font-weight:700}
+  .rail-head .cnt{font-family:var(--f-mono);font-size:11px;color:var(--mut2)}
+  .rail-list{overflow-y:auto;padding:2px 12px 14px;flex:1}
+  .site{padding:13px 14px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;position:relative;margin-bottom:8px;background:var(--panel);box-shadow:var(--shadow);transition:box-shadow .15s,border-color .15s}
+  .site:hover{border-color:var(--line2);box-shadow:var(--shadow-md)}
+  .site:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .site.on{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),var(--shadow-md)}
+  .site.on::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--amber)}
+  .site .nm{font-size:14px;font-weight:700;color:var(--ink)}
+  .site .ad{font-size:11px;color:var(--mut);margin-top:3px}
+  .site .meta{display:flex;gap:10px;margin-top:9px;font-family:var(--f-mono);font-size:10.5px;color:var(--mut2);flex-wrap:wrap}
+  .badge{position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;letter-spacing:.02em;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+  .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .b-ok{background:#e7f5ec;color:#0f8f4f}
+  .b-watch{background:#fff3e0;color:#b56d00}
+  .rail-note{margin:0 14px 14px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:10.5px;color:var(--mut);line-height:1.65;background:var(--panel)}
+
+  /* ---- center ---- */
+  .scope{display:flex;flex-direction:column;min-height:0;overflow-y:auto;background:var(--bg)}
+  .scope-head{padding:18px 26px 8px;display:flex;align-items:flex-start;gap:16px}
+  .scope-head h1{font-family:var(--f-disp);font-size:22px;font-weight:750;letter-spacing:-.01em;color:var(--ink)}
+  .scope-head .loc{font-size:11.5px;color:var(--mut);margin-top:4px}
+  .scope-head .loc .mono{font-size:10px;color:var(--mut2)}
+  .kpis{margin-left:auto;display:flex;gap:9px;flex-shrink:0}
+  .kpi{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 13px;min-width:86px;box-shadow:var(--shadow)}
+  .kpi .lab{font-size:9px;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;font-weight:600}
+  .kpi .val{font-family:var(--f-mono);font-size:18px;font-weight:600;margin-top:4px;color:var(--ink)}
+  .kpi .val small{font-size:10px;color:var(--mut);font-weight:400}
+  .kpi .val.good{color:var(--ok)} .kpi .val.warn{color:var(--amber-dim)}
+
+  .map-wrap{margin:10px 26px 0;position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#dfe3e8;height:352px;flex-shrink:0;box-shadow:var(--shadow)}
+  .map-tiles{position:absolute;inset:0}
+  .map-tiles img{position:absolute;width:256px;height:256px;user-select:none;pointer-events:none}
+  .map-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .map-attr{position:absolute;right:9px;bottom:8px;font-size:9px;color:#3c4550;background:rgba(255,255,255,.86);padding:3px 8px;border-radius:6px}
+  .map-attr a{color:#3c4550}
+  .map-tag{position:absolute;left:12px;top:12px;font-family:var(--f-mono);font-size:9.5px;color:var(--ink);background:rgba(255,255,255,.92);border:1px solid var(--line2);padding:6px 11px;border-radius:8px;line-height:1.7;box-shadow:var(--shadow)}
+  .map-tag b{color:var(--amber-dim)}
+
+  .chart-card{margin:14px 26px 20px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px 18px 12px;flex-shrink:0;box-shadow:var(--shadow)}
+  .chart-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+  .chart-head h3{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+  .chart-head .hint{font-size:10.5px;color:var(--mut2)}
+  .legend{margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--mut)}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+  .legend .gapmk{color:var(--alert);font-family:var(--f-mono)}
+  #chart{display:block;width:100%;height:200px}
+  .tip{position:fixed;z-index:30;pointer-events:none;background:var(--panel);border:1px solid var(--line2);border-radius:10px;
+    padding:9px 12px;font-size:11.5px;line-height:1.75;color:var(--ink);box-shadow:var(--shadow-md);display:none;min-width:158px}
+  .tip .t{font-family:var(--f-mono);font-size:10px;color:var(--mut)}
+  .tip .v i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
+  /* ---- right ---- */
+  .prop{border-left:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;min-height:0}
+  .prop-head{padding:16px 20px 13px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--panel)}
+  .prop-head h2{font-size:11px;letter-spacing:.12em;color:var(--mut);text-transform:uppercase;font-weight:700}
+  .prop-head .upd{font-family:var(--f-mono);font-size:9.5px;color:var(--mut2)}
+  .prop-body{overflow-y:auto;padding:16px 20px 18px;flex:1}
+
+  .status-card{border-radius:12px;padding:14px 15px 14px 17px;margin-bottom:14px;border:1px solid;position:relative;overflow:hidden}
+  .status-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .sc-ok{background:#f1faf4;border-color:#c7e8d3}
+  .sc-ok::before{background:var(--ok)}
+  .sc-watch{background:#fff8ec;border-color:#f0dcb0}
+  .sc-watch::before{background:var(--amber)}
+  .sc-tag{font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .sc-ok .sc-tag{color:var(--ok)} .sc-watch .sc-tag{color:var(--amber-dim)}
+  .sc-msg{font-size:12.5px;line-height:1.7;margin-top:7px;color:var(--ink-soft)}
+  .sc-msg b{color:var(--ink);font-weight:700}
+
+  .sec-lab{font-size:10.5px;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin:18px 0 9px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+  .sec-lab .note{font-size:9.5px;color:var(--mut2);letter-spacing:0;text-transform:none;font-weight:400}
+
+  table.basis{width:100%;border-collapse:collapse;font-size:11.5px}
+  table.basis td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  table.basis td.k{color:var(--mut);width:38%}
+  table.basis td.v{font-family:var(--f-mono);color:var(--ink)}
+  table.basis td.s{text-align:right;width:26%}
+  .src-tag{display:inline-block;font-size:8.5px;font-family:var(--f-mono);letter-spacing:.02em;padding:2px 7px;border-radius:20px;border:1px solid var(--line2);color:var(--mut)}
+  .src-tag.fix{color:#0f8f4f;border-color:#bfe6cc;background:#f1faf4}
+  .src-tag.pub{color:#4048c8;border-color:#cdd0f2;background:#f2f3fd}
+  .src-tag.est{color:#b56d00;border-color:#f0dcb0;background:#fff8ec}
+
+  .calc-box{background:#f7f9fb;border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-top:11px}
+  .calc-box .formula{font-family:var(--f-mono);font-size:10px;color:var(--mut);line-height:1.8}
+  .calc-box .result{display:flex;align-items:baseline;gap:8px;margin-top:9px}
+  .calc-box .amt{font-family:var(--f-mono);font-size:23px;font-weight:700;color:var(--ink)}
+  .calc-box .amt.zero{color:var(--ok)}
+  .calc-box .amt small{font-size:11px;color:var(--mut);font-weight:400}
+  .calc-box .range{font-family:var(--f-mono);font-size:12px;color:var(--amber-dim);font-weight:600}
+  .calc-warn{margin-top:10px;padding:8px 11px;border-radius:8px;background:#fff8ec;border:1px solid #f0dcb0;font-size:10px;color:#8a5a10;line-height:1.6}
+  .sim-toggle{margin-top:11px;width:100%;padding:9px;border-radius:9px;border:1px dashed var(--line2);background:var(--panel);color:var(--mut);font-size:11px;cursor:pointer;font-family:var(--f-body)}
+  .sim-toggle:hover{border-color:var(--amber);color:var(--amber-dim)}
+  .sim-toggle:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .draft{font-size:11.5px;line-height:1.8;color:var(--ink-soft);background:#f7f9fb;border:1px solid var(--line);border-radius:11px;padding:13px 14px;white-space:pre-wrap}
+  .draft .hl{color:var(--amber-dim);font-weight:700}
+
+  .srcs{margin-top:15px;font-size:9.5px;color:var(--mut2);line-height:1.8;border-top:1px solid var(--line);padding-top:11px}
+
+  .actions{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:9px;background:var(--panel)}
+  .btn{flex:1;padding:11px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--f-body);border:1px solid var(--line2);background:var(--panel);color:var(--ink);transition:all .15s}
+  .btn:hover{background:#f2f4f7;border-color:var(--mut2)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .btn.pri{background:var(--amber);color:#fff;border-color:var(--amber);box-shadow:0 2px 6px rgba(229,138,0,.28)}
+  .btn.pri:hover{background:#cf7d00;border-color:#cf7d00}
+
+  .demo-flag{position:fixed;bottom:14px;right:396px;z-index:20;font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;color:var(--mut);background:rgba(255,255,255,.9);border:1px solid var(--line);padding:4px 9px;border-radius:6px;box-shadow:var(--shadow)}
+
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:#cfd6df;border-radius:6px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#b4bdc9;background-clip:content-box}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (max-width:1180px){.app{grid-template-columns:1fr}.rail,.prop,.demo-flag{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <a href="./index.html" style="font-size:11px;color:var(--mut);text-decoration:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;white-space:nowrap">← トップへ</a>
+    <div class="brand">SUN<b>SCOUT</b><span class="sub">Monthly Vegetation Report</span></div>
+    <div class="cadence mono"><span class="dot"></span>月1回更新<span>／ 最新: 2025-12 ・ 次回: 2026-08-01</span></div>
+    <div class="top-src">位置・面積・NDVIはすべて実測データ（Sentinel-2 L2A ・ 2024-01〜2025-12）</div>
+  </header>
+
+  <aside class="rail">
+    <div class="rail-head"><h2>監視サイト</h2><span class="cnt mono" id="siteCount"></span></div>
+    <div class="rail-list" id="siteList"></div>
+    <div class="rail-note">事業者名はサンプル表記。所在地・敷地ポリゴン・NDVI時系列は実在発電所の実測値（FIT公表情報 + Sentinel-2）。</div>
+  </aside>
+
+  <main class="scope">
+    <div class="scope-head">
+      <div>
+        <h1 id="siteTitle">—</h1>
+        <div class="loc"><span id="siteLoc">—</span><br><span class="mono" id="siteCoord"></span></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="lab">敷地面積</div><div class="val" id="kArea">—</div></div>
+        <div class="kpi"><div class="lab">FIT認定出力</div><div class="val" id="kOut">—</div></div>
+        <div class="kpi"><div class="lab">最新月 NDVI</div><div class="val" id="kNdvi">—</div></div>
+        <div class="kpi"><div class="lab">前年同月差</div><div class="val" id="kYoy">—</div></div>
+      </div>
+    </div>
+
+    <div class="map-wrap">
+      <div class="map-tiles" id="mapTiles"></div>
+      <svg class="map-svg" id="mapSvg"></svg>
+      <div class="map-tag mono" id="mapTag"></div>
+      <div class="map-attr">出典: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院（地理院タイル）</a></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>月次 NDVI（敷地median・前年比較）</h3>
+        <span class="hint">グラフに触れると各月の値を表示</span>
+        <div class="legend mono">
+          <span><i style="background:var(--s-cur)"></i>2025年</span>
+          <span><i style="background:var(--s-prev)"></i>2024年</span>
+          <span class="gapmk">× 欠測月（雲被覆）</span>
+        </div>
+      </div>
+      <svg id="chart" role="img" aria-label="月次NDVIの当年・前年比較チャート"></svg>
+    </div>
+  </main>
+
+  <aside class="prop">
+    <div class="prop-head"><h2>月次レポート・提案ドラフト</h2><span class="upd mono">OBS 2025-12</span></div>
+    <div class="prop-body" id="propBody"></div>
+    <div class="actions">
+      <button class="btn">PDF出力</button>
+      <button class="btn pri">訪問予定に登録</button>
+    </div>
+  </aside>
+</div>
+
+<div class="demo-flag mono">DEMO ／ 事業者名はサンプル・数値は実測</div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* ================= 実データ =================
+   NDVI: Sentinel-2 L2A Statistical API (SCL雲マスク・P10D→月次median集約)
+   AOI:  FIT公表情報→GSIジオコーディング→航空写真デジタイズ (EPSG:4326)     */
+const MONTHLY = {
+ tahara_flat:[{m:"2024-01",v:0.024},{m:"2024-02",v:0.003},{m:"2024-03",v:0.021},{m:"2024-04",v:0.032},{m:"2024-05",v:0.017},{m:"2024-06",v:null},{m:"2024-07",v:0.003},{m:"2024-08",v:0.037},{m:"2024-09",v:-0.001},{m:"2024-10",v:0.043},{m:"2024-11",v:0.045},{m:"2024-12",v:0.023},{m:"2025-01",v:0.02},{m:"2025-02",v:0.025},{m:"2025-03",v:0.034},{m:"2025-04",v:0.052},{m:"2025-05",v:null},{m:"2025-06",v:0.023},{m:"2025-07",v:0.017},{m:"2025-08",v:0.046},{m:"2025-09",v:0.002},{m:"2025-10",v:null},{m:"2025-11",v:0.028},{m:"2025-12",v:0.002}],
+ shinshiro_slope:[{m:"2024-01",v:0.104},{m:"2024-02",v:0.125},{m:"2024-03",v:0.136},{m:"2024-04",v:0.158},{m:"2024-05",v:0.229},{m:"2024-06",v:null},{m:"2024-07",v:0.214},{m:"2024-08",v:0.162},{m:"2024-09",v:0.122},{m:"2024-10",v:0.14},{m:"2024-11",v:0.125},{m:"2024-12",v:0.147},{m:"2025-01",v:0.112},{m:"2025-02",v:0.112},{m:"2025-03",v:0.094},{m:"2025-04",v:0.15},{m:"2025-05",v:null},{m:"2025-06",v:0.201},{m:"2025-07",v:0.2},{m:"2025-08",v:0.157},{m:"2025-09",v:0.136},{m:"2025-10",v:0.136},{m:"2025-11",v:0.128},{m:"2025-12",v:0.125}]
+};
+
+const SITES = [
+ {id:"tahara_flat", nm:"A発電所（サンプル社名）", ad:"愛知県田原市緑が浜二号（臨海造成地・平地）",
+  kw:64000, ha:64.6, tariff:32, tariffNote:"2014年度FIT認定単価の想定値・要契約確認",
+  density:0.99, center:[137.2686,34.7136], zoom:15,
+  ring:[[137.268484,34.71911],[137.273698,34.714666],[137.273312,34.71396],[137.27138,34.710344],[137.270308,34.708228],[137.268806,34.708139],[137.267196,34.709286],[137.265909,34.710873],[137.263656,34.715459]]},
+ {id:"shinshiro_slope", nm:"B発電所（サンプル社名）", ad:"愛知県豊田市井ノ口町（山間・森林隣接）",
+  kw:41250, ha:66.7, tariff:14, tariffNote:"2020年運開のFIT単価想定値・要契約確認",
+  density:0.62, center:[137.2706,35.1537], zoom:15,
+  ring:[[137.265501,35.159056],[137.267218,35.158091],[137.26872,35.156688],[137.270007,35.155898],[137.271938,35.155021],[137.276766,35.154319],[137.276874,35.151074],[137.274942,35.150811],[137.274299,35.150284],[137.274084,35.148267],[137.272689,35.148003],[137.271295,35.150021],[137.270973,35.150986],[137.268505,35.151249],[137.265501,35.151775],[137.264321,35.153004],[137.264214,35.154583],[137.265029,35.155495],[137.265286,35.157039]]},
+];
+
+/* ============ 指標計算（実データから） ============ */
+function series(site){ return MONTHLY[site.id]; }
+function latestObs(site){
+  const s = series(site);
+  for(let i=s.length-1;i>=0;i--) if(s[i].v!=null) return s[i];
+  return null;
+}
+function yoyDiff(site){
+  const s = series(site), last = latestObs(site);
+  if(!last) return null;
+  const prev = s.find(r=>r.m === (parseInt(last.m.slice(0,4))-1) + last.m.slice(4));
+  return (prev && prev.v!=null) ? +(last.v - prev.v).toFixed(3) : null;
+}
+function summerPeak(site, year){
+  const s = series(site).filter(r=>r.m.startsWith(year) && ["06","07","08"].includes(r.m.slice(5)) && r.v!=null);
+  return s.length ? Math.max(...s.map(r=>r.v)) : null;
+}
+function status(site){
+  const yoy = yoyDiff(site), peak = summerPeak(site,"2025");
+  if((yoy!=null && yoy > 0.05)) return "alert";
+  if(peak!=null && peak >= 0.18) return "watch";   // 夏季の縁辺植生繁茂
+  return "ok";
+}
+function gapCount(site){ return series(site).filter(r=>r.v==null).length; }
+
+/* ============ 左レール ============ */
+let active = SITES[0];
+function renderList(){
+  const el = document.getElementById("siteList"); el.innerHTML = "";
+  document.getElementById("siteCount").textContent = SITES.length + " sites";
+  SITES.forEach(s=>{
+    const st = status(s);
+    const d = document.createElement("div");
+    d.className = "site" + (s.id===active.id ? " on" : "");
+    d.tabIndex = 0;
+    d.innerHTML = `<span class="badge ${st==="ok"?"b-ok":"b-watch"}">${st==="ok"?"良好":"監視"}</span>
+      <div class="nm">${s.nm}</div><div class="ad">${s.ad}</div>
+      <div class="meta mono"><span>${(s.kw/1000).toFixed(1)}MW</span><span>${s.ha}ha</span><span>欠測 ${gapCount(s)}/24ヶ月</span></div>`;
+    const sel = ()=>{active=s; renderAll();};
+    d.onclick = sel;
+    d.onkeydown = e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();sel();}};
+    el.appendChild(d);
+  });
+}
+
+/* ============ 地図（地理院タイル + AOIポリゴン） ============ */
+function lon2wx(lon,z){ return (lon+180)/360 * Math.pow(2,z) * 256; }
+function lat2wy(lat,z){ const r=lat*Math.PI/180; return (1-Math.asinh(Math.tan(r))/Math.PI)/2 * Math.pow(2,z) * 256; }
+
+function renderMap(){
+  const wrap = document.querySelector(".map-wrap");
+  const W = wrap.clientWidth, H = wrap.clientHeight, z = active.zoom;
+  const cx = lon2wx(active.center[0],z), cy = lat2wy(active.center[1],z);
+  const ox = cx - W/2, oy = cy - H/2;                       // 画面左上のワールドpx
+  const tiles = document.getElementById("mapTiles"); tiles.innerHTML = "";
+  const t0x = Math.floor(ox/256), t0y = Math.floor(oy/256);
+  const t1x = Math.floor((ox+W)/256), t1y = Math.floor((oy+H)/256);
+  for(let ty=t0y; ty<=t1y; ty++) for(let tx=t0x; tx<=t1x; tx++){
+    const img = document.createElement("img");
+    img.src = `https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/${z}/${tx}/${ty}.jpg`;
+    img.alt = "";
+    img.style.left = (tx*256-ox)+"px";
+    img.style.top  = (ty*256-oy)+"px";
+    tiles.appendChild(img);
+  }
+  const svg = document.getElementById("mapSvg");
+  const pts = active.ring.map(([lo,la])=>`${(lon2wx(lo,z)-ox).toFixed(1)},${(lat2wy(la,z)-oy).toFixed(1)}`).join(" ");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML = `<polygon points="${pts}" fill="rgba(255,176,32,.10)" stroke="var(--amber)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  document.getElementById("mapTag").innerHTML =
+    `<b>監視AOI</b> ${active.ha} ha ・ ${(active.kw/1000).toFixed(1)}MW（${active.density} MW/ha 整合確認済み）<br>` +
+    `中心 ${active.center[1].toFixed(4)}N, ${active.center[0].toFixed(4)}E ・ 敷地輪郭は航空写真からデジタイズ`;
+}
+
+/* ============ 月次チャート（当年 vs 前年） ============ */
+const MONTH_LABELS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+function renderChart(){
+  const svg = document.getElementById("chart");
+  const W = svg.clientWidth || 700, H = 190;
+  const P = {l:44, r:14, t:12, b:26};
+  const iw = W-P.l-P.r, ih = H-P.t-P.b;
+  const s = series(active);
+  const cur  = s.filter(r=>r.m.startsWith("2025"));
+  const prev = s.filter(r=>r.m.startsWith("2024"));
+  const vmax = Math.max(0.08, ...s.filter(r=>r.v!=null).map(r=>r.v*1.3));
+  const x = i => P.l + iw*(i+0.5)/12;
+  const y = v => P.t + ih*(1 - v/vmax);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+
+  let g = "";
+  const steps = 3;
+  for(let k=0;k<=steps;k++){
+    const vv = vmax*k/steps, yy = y(vv);
+    g += `<line x1="${P.l}" y1="${yy}" x2="${W-P.r}" y2="${yy}" stroke="#e6eaf0" stroke-width="1"/>` +
+         `<text x="${P.l-7}" y="${yy+3.5}" text-anchor="end" font-size="9" fill="#8a94a2" font-family="Consolas,monospace">${vv.toFixed(2)}</text>`;
+  }
+  for(let i=0;i<12;i++)
+    g += `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="#8a94a2">${MONTH_LABELS[i]}</text>`;
+
+  function path(arr){
+    let d="", pen=false;
+    arr.forEach((r,i)=>{
+      if(r.v==null){pen=false;return;}
+      d += (pen?"L":"M") + x(i).toFixed(1) + " " + y(r.v).toFixed(1) + " ";
+      pen=true;
+    });
+    return d;
+  }
+  g += `<path d="${path(prev)}" fill="none" stroke="var(--s-prev)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" opacity=".85"/>`;
+  g += `<path d="${path(cur)}"  fill="none" stroke="var(--s-cur)"  stroke-width="2.5" stroke-linecap="round"/>`;
+  cur.forEach((r,i)=>{ if(r.v!=null) g += `<circle cx="${x(i)}" cy="${y(r.v)}" r="3.4" fill="var(--s-cur)" stroke="#ffffff" stroke-width="2"/>`; });
+  prev.forEach((r,i)=>{ if(r.v!=null) g += `<circle cx="${x(i)}" cy="${y(r.v)}" r="2.6" fill="var(--s-prev)" stroke="#ffffff" stroke-width="2" opacity=".85"/>`; });
+  // 欠測月マーカー
+  [cur,prev].forEach((arr,ai)=>arr.forEach((r,i)=>{
+    if(r.v==null) g += `<text x="${x(i)+(ai?5:-5)}" y="${P.t+ih-2}" text-anchor="middle" font-size="10" fill="#d83f30" font-family="Consolas,monospace">×</text>`;
+  }));
+  g += `<rect id="hitzone" x="${P.l}" y="${P.t}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  svg.innerHTML = g;
+
+  const tip = document.getElementById("tip");
+  const hit = svg.querySelector("#hitzone");
+  hit.addEventListener("mousemove", e=>{
+    const rect = svg.getBoundingClientRect();
+    const mi = Math.max(0, Math.min(11, Math.floor((e.clientX-rect.left-P.l) / (iw/12))));
+    const c = cur[mi], p = prev[mi];
+    tip.style.display = "block";
+    tip.style.left = Math.min(e.clientX+14, window.innerWidth-190)+"px";
+    tip.style.top  = (e.clientY-14)+"px";
+    tip.innerHTML = `<div class="t">${MONTH_LABELS[mi]}</div>
+      <div class="v"><i style="background:var(--s-cur)"></i>2025: <b>${c&&c.v!=null?c.v.toFixed(3):"欠測（雲被覆）"}</b></div>
+      <div class="v"><i style="background:var(--s-prev)"></i>2024: <b>${p&&p.v!=null?p.v.toFixed(3):"欠測（雲被覆）"}</b></div>`;
+  });
+  hit.addEventListener("mouseleave", ()=>{ tip.style.display="none"; });
+}
+
+/* ============ ヘッダKPI ============ */
+function renderHead(){
+  document.getElementById("siteTitle").textContent = active.nm;
+  document.getElementById("siteLoc").textContent = active.ad;
+  document.getElementById("siteCoord").textContent =
+    `${active.center[1].toFixed(4)}N, ${active.center[0].toFixed(4)}E ／ AOI確定: FIT公表情報 + 航空写真デジタイズ`;
+  document.getElementById("kArea").innerHTML = active.ha + " <small>ha</small>";
+  document.getElementById("kOut").innerHTML = (active.kw/1000).toFixed(1) + " <small>MW</small>";
+  const last = latestObs(active), yoy = yoyDiff(active);
+  document.getElementById("kNdvi").innerHTML = last ? last.v.toFixed(3) + ` <small>(${last.m.slice(5)}月)</small>` : "—";
+  const ke = document.getElementById("kYoy");
+  if(yoy==null){ ke.textContent="—"; ke.className="val"; }
+  else{
+    ke.innerHTML = (yoy>0?"+":"") + yoy.toFixed(3);
+    ke.className = "val " + (yoy>0.05 ? "warn" : "good");
+  }
+}
+
+/* ============ 右ペイン（事実 → 根拠 → 提案） ============ */
+function fmtYen(n){ return "¥" + Math.round(n).toLocaleString(); }
+function renderProp(){
+  const st = status(active), last = latestObs(active), yoy = yoyDiff(active);
+  const peak = summerPeak(active,"2025");
+  const body = document.getElementById("propBody");
+
+  const scMsg = st==="ok"
+    ? `直近24ヶ月のNDVIは低位で安定（最新 ${last.v.toFixed(3)}、前年同月差 ${(yoy>0?"+":"")+yoy.toFixed(3)}）。<b>植生による発電影響の兆候はありません。</b>定期報告のみで問題ありません。`
+    : `夏季（6〜8月）のNDVIが <b>${peak.toFixed(2)}</b> まで上昇しており、縁辺部の季節的な植生繁茂が推定されます。次回訪問時の<b>目視確認</b>を推奨します（最新月は ${last.v.toFixed(3)} に低下・冬季）。`;
+
+  /* --- 損失試算（根拠を全て開示） --- */
+  const assumedKw = st==="ok" ? 0 : Math.round(active.density*100);  // 縁辺1,000m2(=0.1ha)×パネル密度 → kW上限
+  const sun=3.29, days=30, factor=0.55;
+  const lossLo = assumedKw*sun*days*factor*active.tariff*0.6;
+  const lossHi = assumedKw*sun*days*factor*active.tariff;
+
+  const simRows = `
+    <table class="basis">
+      <tr><td class="k">FIT売電単価</td><td class="v">¥${active.tariff}/kWh</td><td class="s"><span class="src-tag est">要契約確認</span></td></tr>
+      <tr><td class="k">平均日照時間</td><td class="v">3.29 h/日</td><td class="s"><span class="src-tag pub">NEDO日射量DB(愛知)</span></td></tr>
+      <tr><td class="k">影付き影響係数</td><td class="v">0.55</td><td class="s"><span class="src-tag est">文献値・未実測</span></td></tr>
+      <tr><td class="k">影響出力（推定）</td><td class="v">${assumedKw>0 ? "〜"+assumedKw+" kW" : "0 kW"}</td><td class="s"><span class="src-tag est">要実測点検</span></td></tr>
+      <tr><td class="k">パネル密度</td><td class="v">${active.density} MW/ha</td><td class="s"><span class="src-tag fix">実測(面積×FIT出力)</span></td></tr>
+    </table>`;
+
+  body.innerHTML = `
+    <div class="status-card ${st==="ok"?"sc-ok":"sc-watch"}">
+      <div class="sc-tag mono">${st==="ok"?"良好 / 定期報告":"監視 / 目視確認を推奨"}</div>
+      <div class="sc-msg">${scMsg}</div>
+    </div>
+
+    <div class="sec-lab">損失試算の積算根拠 <span class="note">全variables開示・確定は実測後</span></div>
+    ${simRows}
+    <div class="calc-box">
+      <div class="formula">影響出力(kW) × 日照3.29h × 30日 × 係数0.55 × 単価¥${active.tariff}</div>
+      <div class="result">
+        ${assumedKw===0
+          ? `<span class="amt zero">¥0<small> /月</small></span><span style="font-size:10.5px;color:var(--mut)">現時点で植生影響なし</span>`
+          : `<span class="range">${fmtYen(lossLo)} 〜 ${fmtYen(lossHi)}<span style="color:var(--mut);font-size:10px"> /月（上限試算）</span></span>`}
+      </div>
+      <div class="calc-warn">⚠ 試算は<b>提案の優先度判断用</b>です。金額の確定は現地の実測点検後に行い、提案書には必ず幅で記載してください。</div>
+      <button class="sim-toggle" id="simBtn">${st==="ok" ? "もし縁辺1,000m²が繁茂した場合の試算例を見る" : "試算条件を変更（実測後に確定）"}</button>
+    </div>
+
+    <div class="sec-lab">提案文ドラフト</div>
+    <div class="draft" id="draftBox">${draftText(st,last,yoy,peak)}</div>
+
+    <div class="srcs">データ出典: Copernicus Sentinel-2 L2A（雲マスク付きNDVI・2024-01〜2025-12） ／
+    国土地理院 地理院タイル・ジオコーディング ／ FIT事業計画認定情報（経産省・2026-05時点）。
+    観測は月1回更新。雲被覆月は「欠測」と明示し補間値は使用しません。</div>`;
+
+  document.getElementById("simBtn").onclick = simToggle;
+}
+
+function draftText(st,last,yoy,peak){
+  if(st==="ok")
+    return `ご担当者様\n\n${active.ad.split("（")[0]} の月次衛星観測レポートをお送りします。\n\n・直近観測（${last.m}）: NDVI ${last.v.toFixed(3)}（前年同月 ${(last.v-yoy).toFixed(3)} → 差 ${(yoy>0?"+":"")+yoy.toFixed(3)}）\n・過去24ヶ月を通じ植生指標は低位で安定しており、雑草・樹木影による発電影響の兆候はありません。\n\n現時点で対応の必要はなく、次回も月次でご報告します。`;
+  return `ご担当者様\n\n${active.ad.split("（")[0]} の月次衛星観測で、<span class="hl">夏季の植生指標上昇（NDVI ${peak.toFixed(2)}）</span>を確認しました。縁辺部の季節的な繁茂と推定されます。\n\n・発電影響は現時点で<span class="hl">未確定</span>です（衛星10m分解能ではパネル単位の影は特定できません）\n・次回訪問時に該当区画の目視確認をご提案します。影響が確認された場合の損失規模は、左記の積算根拠に基づき<span class="hl">実測後に幅でご提示</span>します。`;
+}
+
+let simOn = false;
+function simToggle(){
+  simOn = !simOn;
+  const st = status(active);
+  if(st!=="ok") return;
+  const box = document.querySelector(".calc-box .result");
+  const kw = Math.round(active.density*100);   // 1,000m2 ≒ 0.1ha × density(MW/ha) → kW
+  const sun=3.29, days=30, factor=0.55;
+  const lo = kw*sun*days*factor*active.tariff*0.6, hi = kw*sun*days*factor*active.tariff;
+  box.innerHTML = simOn
+    ? `<span class="range">${fmtYen(lo)} 〜 ${fmtYen(hi)}<span style="color:var(--mut);font-size:10px"> /月（縁辺1,000m²繁茂の仮定）</span></span>`
+    : `<span class="amt zero">¥0<small> /月</small></span><span style="font-size:10.5px;color:var(--mut)">現時点で植生影響なし</span>`;
+  document.getElementById("simBtn").textContent = simOn ? "試算例を閉じる（現状は影響なし）" : "もし縁辺1,000m²が繁茂した場合の試算例を見る";
+}
+
+/* ============ init ============ */
+if(location.hash==="#2") active = SITES[1];   // 検証・共有用: #2 でBサイトを初期表示
+function renderAll(){ simOn=false; renderList(); renderHead(); renderMap(); renderChart(); renderProp(); }
+window.addEventListener("resize", ()=>{ renderMap(); renderChart(); });
+renderAll();
+</script>
+</body>
+</html>
